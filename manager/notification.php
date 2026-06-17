@@ -6,6 +6,9 @@
 session_start();
 require_once '../db_config.php';
 
+// Auto-clean trailing question marks from database
+$conn->query("UPDATE notifications SET message = TRIM(TRAILING '?' FROM TRIM(message)) WHERE message LIKE '%?'");
+
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Manager') {
     header("Location: ../login.php");
     exit();
@@ -50,26 +53,48 @@ $notifications = $stmt_list->get_result();
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Quicksand:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
         body { font-family: 'Quicksand', sans-serif; background-color: #FFF5F7; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Outfit', sans-serif; }
         .pink-gradient { background: linear-gradient(135deg, #FB6F92 0%, #FFB3C6 100%); }
         
-        /* SIDEBAR UI MATCHED TO SYSTEM DESIGN */
+        /* SIDEBAR UI MATCHED TO ADMIN */
         .sidebar-active {
-            background: #FFE4EA; 
-            border-left: 6px solid #FB6F92;
+            background: linear-gradient(90deg, rgba(251, 111, 146, 0.08) 0%, rgba(255, 179, 198, 0.02) 100%);
+            border-left: 5px solid #FB6F92;
             color: #FB6F92;
             font-weight: 800;
-            border-radius: 0 1.5rem 1.5rem 0;
+            border-radius: 0 1rem 1rem 0;
         }
-        .sidebar-link { color: #64748b; font-weight: 600; font-size: 0.95rem; }
-        .sidebar-link:hover { color: #FB6F92; background: #FFF0F3; border-radius: 0 1.5rem 1.5rem 0; }
+        .sidebar-active i { color: #FB6F92; }
+        .sidebar-link {
+            color: #64748b;
+            font-weight: 600;
+            border-left: 5px solid transparent;
+            font-size: 0.95rem;
+        }
+        .sidebar-link:hover {
+            background: #fff1f2;
+            color: #FB6F92;
+            border-radius: 0 1rem 1rem 0;
+        }
 
-        /* Notification Card Style */
-        .notif-card { transition: all 0.3s ease; border: 1px solid #FFE4EA; }
-        .notif-card:hover { transform: scale(1.01); border-color: #FB6F92; }
+        /* Glassmorphism Card styling */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 228, 234, 0.6);
+            border-radius: 2rem;
+            box-shadow: 0 20px 40px rgba(251, 111, 146, 0.03);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(251, 111, 146, 0.3);
+            box-shadow: 0 30px 60px rgba(251, 111, 146, 0.07);
+        }
         
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #FFF5F7; }
@@ -110,7 +135,7 @@ $notifications = $stmt_list->get_result();
                     <i data-lucide="bell" class="w-5 h-5"></i> Notifications
                 </div>
                 <?php if($unread_count > 0): ?>
-                    <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                    <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]"></span>
                 <?php endif; ?>
             </a>
         </div>
@@ -153,7 +178,7 @@ $notifications = $stmt_list->get_result();
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
         <div class="lg:col-span-2 space-y-6">
-            <div class="bg-white rounded-[3rem] shadow-xl shadow-pink-100/50 border border-pink-50 overflow-hidden">
+            <div class="glass-card overflow-hidden">
                 <div class="p-8 border-b border-pink-50 flex justify-between items-center bg-white">
                     <h3 class="text-xl font-extrabold text-[#1e293b] flex items-center gap-3">
                         <span class="w-2 h-8 pink-gradient rounded-full"></span>
@@ -191,7 +216,7 @@ $notifications = $stmt_list->get_result();
                                     <p class="text-base font-extrabold text-[#1e293b]"><?= htmlspecialchars($n['notification_type']) ?></p>
                                     <span class="text-[10px] text-pink-300 font-bold uppercase"><?= date('H:i A', strtotime($n['timestamp'])) ?></span>
                                 </div>
-                                <p class="text-sm text-gray-500 mt-1 font-medium leading-relaxed"><?= htmlspecialchars($n['message']) ?></p>
+                                <p class="text-sm text-gray-500 mt-1 font-medium leading-relaxed"><?= htmlspecialchars(rtrim($n['message'], '? ')) ?></p>
                                 <?php if ($n['notification_type'] === 'Submission'): ?>
                                     <div class="mt-4 flex gap-3">
                                         <a href="verify_tasks.php" class="px-5 py-2 rounded-xl text-[11px] font-black pink-gradient text-white shadow-md shadow-pink-100">REVIEW NOW</a>
@@ -212,7 +237,7 @@ $notifications = $stmt_list->get_result();
         </div>
 
         <div class="space-y-8">
-            <div class="bg-white rounded-[2.5rem] p-10 shadow-xl shadow-pink-100/50 border border-pink-50 relative overflow-hidden">
+            <div class="glass-card p-10 relative overflow-hidden">
                 <div class="absolute top-0 right-0 w-24 h-24 bg-pink-50 rounded-bl-full opacity-50"></div>
                 <h3 class="text-xl font-extrabold text-[#1e293b] mb-8 relative">Quick Management</h3>
                 
@@ -225,17 +250,6 @@ $notifications = $stmt_list->get_result();
                         <i data-lucide="check-circle-2" class="w-5 h-5 text-[#FB6F92]"></i> Review Submissions
                     </a>
 
-                    <button class="w-full p-5 bg-[#FFF9FA] border-2 border-dashed border-pink-100 text-pink-400 rounded-2xl text-[11px] font-black uppercase tracking-widest flex items-center gap-3 hover:border-[#FB6F92] hover:text-[#FB6F92] hover:bg-pink-50/50 transition-all">
-                        <i data-lucide="settings-2" class="w-5 h-5"></i> Notification Settings
-                    </button>
-                </div>
-            </div>
-            
-            <div class="bg-white p-8 rounded-[2.5rem] border border-pink-50 flex items-center gap-5">
-                <div class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
-                <div>
-                    <p class="text-[11px] font-black text-[#1e293b] uppercase">AI Notification Engine</p>
-                    <p class="text-[10px] font-bold text-green-500 uppercase">Online & Monitoring</p>
                 </div>
             </div>
         </div>

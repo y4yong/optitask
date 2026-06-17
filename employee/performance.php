@@ -16,6 +16,15 @@ $user_id = $_SESSION['user_id'];
 $username = $_SESSION['username'];
 $active = 'performance';
 
+// Check for Unread Notifications for Sidebar Red Dot
+$unread_query = "SELECT COUNT(*) as total FROM notifications WHERE user_id = ? AND status = 'unread'";
+$stmt_unread = $conn->prepare($unread_query);
+$stmt_unread->bind_param("s", $user_id);
+$stmt_unread->execute();
+$unread_count = $stmt_unread->get_result()->fetch_assoc()['total'];
+$stmt_unread->close();
+
+
 function calculateCompletionRate($verifiedTasks, $totalTasks) {
     if ($totalTasks == 0) {
         return 0;
@@ -59,21 +68,48 @@ $breakdown_tasks = $stmt_breakdown->get_result();
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Quicksand:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
         body { font-family: 'Quicksand', sans-serif; background-color: #FFF5F7; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Outfit', sans-serif; }
         .pink-gradient { background: linear-gradient(135deg, #FB6F92 0%, #FFB3C6 100%); }
         
+        /* SIDEBAR UI MATCHED TO ADMIN */
         .sidebar-active {
-            background: #FFE4EA; 
-            border-left: 6px solid #FB6F92;
+            background: linear-gradient(90deg, rgba(251, 111, 146, 0.08) 0%, rgba(255, 179, 198, 0.02) 100%);
+            border-left: 5px solid #FB6F92;
             color: #FB6F92;
             font-weight: 800;
-            border-radius: 0 1.5rem 1.5rem 0;
+            border-radius: 0 1rem 1rem 0;
         }
-        .sidebar-link { color: #64748b; font-weight: 600; font-size: 0.95rem; }
-        .sidebar-link:hover { color: #FB6F92; background: #FFF0F3; border-radius: 0 1.5rem 1.5rem 0; }
+        .sidebar-active i { color: #FB6F92; }
+        .sidebar-link {
+            color: #64748b;
+            font-weight: 600;
+            border-left: 5px solid transparent;
+            font-size: 0.95rem;
+        }
+        .sidebar-link:hover {
+            background: #fff1f2;
+            color: #FB6F92;
+            border-radius: 0 1rem 1rem 0;
+        }
+
+        /* Glassmorphism Card styling */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 228, 234, 0.6);
+            border-radius: 2rem;
+            box-shadow: 0 20px 40px rgba(251, 111, 146, 0.03);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(251, 111, 146, 0.3);
+            box-shadow: 0 30px 60px rgba(251, 111, 146, 0.07);
+        }
         
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #FFF5F7; }
@@ -103,13 +139,25 @@ $breakdown_tasks = $stmt_breakdown->get_result();
             <i data-lucide="clipboard-list" class="w-5 h-5"></i> My Tasks
         </a>
 
+        <a href="update_tasks.php" class="sidebar-link flex items-center gap-4 px-8 py-4 transition-all">
+            <i data-lucide="check-circle" class="w-5 h-5"></i> Submissions
+        </a>
+
         <div class="pt-6">
             <p class="text-[11px] uppercase tracking-[0.2em] text-pink-300 font-bold px-8 mb-4">Account</p>
+            <a href="skills.php" class="sidebar-link flex items-center gap-4 px-8 py-4 transition-all">
+                <i data-lucide="user" class="w-5 h-5"></i> Profile
+            </a>
             <a href="performance.php" class="sidebar-active flex items-center gap-4 px-8 py-4 transition-all">
                 <i data-lucide="bar-chart-3" class="w-5 h-5"></i> Performance
             </a>
-            <a href="notification.php" class="sidebar-link flex items-center gap-4 px-8 py-4 transition-all">
-                <i data-lucide="bell" class="w-5 h-5"></i> Notifications
+            <a href="notification.php" class="sidebar-link flex items-center justify-between px-8 py-4 transition-all">
+                <div class="flex items-center gap-4">
+                    <i data-lucide="bell" class="w-5 h-5"></i> Notifications
+                </div>
+                <?php if(isset($unread_count) && $unread_count > 0): ?>
+                    <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]"></span>
+                <?php endif; ?>
             </a>
         </div>
     </nav>
@@ -145,7 +193,7 @@ $breakdown_tasks = $stmt_breakdown->get_result();
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- KPI 1 -->
-        <div class="bg-white rounded-[2.5rem] shadow-xl shadow-pink-100/30 border border-pink-50 p-8">
+        <div class="glass-card p-8">
             <p class="text-[10px] font-black text-pink-300 uppercase tracking-widest">Completion Rate</p>
             <div class="flex items-end gap-3 mt-3">
                 <h2 class="text-5xl font-black text-[#FB6F92]"><?= number_format($completionRate, 1) ?>%</h2>
@@ -157,7 +205,7 @@ $breakdown_tasks = $stmt_breakdown->get_result();
         </div>
 
         <!-- KPI 2 -->
-        <div class="bg-white rounded-[2.5rem] shadow-xl shadow-pink-100/30 border border-pink-50 p-8">
+        <div class="glass-card p-8">
             <p class="text-[10px] font-black text-pink-300 uppercase tracking-widest">Tasks Completed</p>
             <div class="flex items-end gap-3 mt-3">
                 <h2 class="text-5xl font-black text-[#1e293b]"><?= $completedTasks ?> <span class="text-2xl text-gray-300">/ <?= $totalTasks ?></span></h2>
@@ -189,7 +237,7 @@ $breakdown_tasks = $stmt_breakdown->get_result();
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
         <!-- Breakdown table -->
-        <div class="lg:col-span-2 bg-white rounded-[2.5rem] shadow-xl shadow-pink-100/30 border border-pink-50 overflow-hidden">
+        <div class="lg:col-span-2 glass-card overflow-hidden">
             <div class="p-8 border-b border-pink-50 bg-white flex justify-between items-center">
                 <h3 class="font-extrabold text-[#1e293b] text-xl tracking-tight italic flex items-center gap-3">
                     <span class="w-2 h-6 pink-gradient rounded-full"></span>
@@ -252,7 +300,7 @@ $breakdown_tasks = $stmt_breakdown->get_result();
         </div>
 
         <!-- Alerts/Notes -->
-        <div class="bg-white rounded-[2.5rem] shadow-xl shadow-pink-100/30 border border-pink-50 p-8 h-fit">
+        <div class="glass-card p-8 h-fit">
             <h4 class="font-extrabold text-[#1e293b] mb-6 flex items-center gap-3">
                 <i data-lucide="lightbulb" class="w-5 h-5 text-[#FB6F92]"></i> 
                 System Insights
@@ -268,9 +316,7 @@ $breakdown_tasks = $stmt_breakdown->get_result();
                 </div>
             </div>
 
-            <button class="mt-8 w-full py-4 bg-[#FBFBFC] border-2 border-pink-50 rounded-2xl text-[10px] font-black text-gray-400 hover:border-[#FB6F92] hover:text-[#FB6F92] hover:bg-[#FFF9FA] transition-all uppercase tracking-widest shadow-sm">
-                Request Review
-            </button>
+            
         </div>
     </div>
 </main>

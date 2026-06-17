@@ -7,6 +7,9 @@
 session_start();
 require_once '../db_config.php';
 
+// Auto-clean trailing question marks from database
+$conn->query("UPDATE notifications SET message = TRIM(TRAILING '?' FROM TRIM(message)) WHERE message LIKE '%?'");
+
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Employee') {
     header("Location: ../login.php");
     exit();
@@ -52,22 +55,48 @@ $notifications = $stmt_list->get_result();
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Quicksand:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
         body { font-family: 'Quicksand', sans-serif; background-color: #FFF5F7; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Outfit', sans-serif; }
         .pink-gradient { background: linear-gradient(135deg, #FB6F92 0%, #FFB3C6 100%); }
         
-        /* SIDEBAR - MATCHED EXACTLY TO YOUR REFERENCE */
+        /* SIDEBAR UI MATCHED TO ADMIN */
         .sidebar-active {
-            background: #FFE4EA; 
-            border-left: 6px solid #FB6F92;
+            background: linear-gradient(90deg, rgba(251, 111, 146, 0.08) 0%, rgba(255, 179, 198, 0.02) 100%);
+            border-left: 5px solid #FB6F92;
             color: #FB6F92;
             font-weight: 800;
-            border-radius: 0 1.5rem 1.5rem 0;
+            border-radius: 0 1rem 1rem 0;
         }
-        .sidebar-link { color: #64748b; font-weight: 600; font-size: 0.95rem; }
-        .sidebar-link:hover { color: #FB6F92; background: #FFF0F3; border-radius: 0 1.5rem 1.5rem 0; }
+        .sidebar-active i { color: #FB6F92; }
+        .sidebar-link {
+            color: #64748b;
+            font-weight: 600;
+            border-left: 5px solid transparent;
+            font-size: 0.95rem;
+        }
+        .sidebar-link:hover {
+            background: #fff1f2;
+            color: #FB6F92;
+            border-radius: 0 1rem 1rem 0;
+        }
+
+        /* Glassmorphism Card styling */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 228, 234, 0.6);
+            border-radius: 2rem;
+            box-shadow: 0 20px 40px rgba(251, 111, 146, 0.03);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(251, 111, 146, 0.3);
+            box-shadow: 0 30px 60px rgba(251, 111, 146, 0.07);
+        }
 
         .unread-dot {
             width: 8px;
@@ -104,9 +133,16 @@ $notifications = $stmt_list->get_result();
         <a href="tasks.php" class="sidebar-link flex items-center gap-4 px-8 py-4 transition-all">
             <i data-lucide="clipboard-list" class="w-5 h-5"></i> My Tasks
         </a>
+
+        <a href="update_tasks.php" class="sidebar-link flex items-center gap-4 px-8 py-4 transition-all">
+            <i data-lucide="check-circle" class="w-5 h-5"></i> Submissions
+        </a>
         
         <div class="pt-6">
             <p class="text-[11px] uppercase tracking-[0.2em] text-pink-300 font-bold px-8 mb-4">Account</p>
+            <a href="skills.php" class="sidebar-link flex items-center gap-4 px-8 py-4 transition-all">
+                <i data-lucide="user" class="w-5 h-5"></i> Profile
+            </a>
             <a href="performance.php" class="sidebar-link flex items-center gap-4 px-8 py-4 transition-all">
                 <i data-lucide="bar-chart-3" class="w-5 h-5"></i> Performance
             </a>
@@ -115,7 +151,7 @@ $notifications = $stmt_list->get_result();
                     <i data-lucide="bell" class="w-5 h-5"></i> Notifications
                 </div>
                 <?php if($unread_count > 0): ?>
-                    <span class="unread-dot animate-pulse"></span>
+                    <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]"></span>
                 <?php endif; ?>
             </a>
         </div>
@@ -150,7 +186,7 @@ $notifications = $stmt_list->get_result();
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
         <div class="lg:col-span-2 space-y-6">
-            <div class="bg-white rounded-[3rem] shadow-xl shadow-pink-100/50 border border-pink-100 overflow-hidden">
+            <div class="glass-card overflow-hidden">
                 <div class="p-8 border-b border-pink-50 bg-white flex justify-between items-center">
                     <h3 class="text-xl font-extrabold text-[#1e293b] flex items-center gap-3 italic">
                         <span class="w-2 h-6 pink-gradient rounded-full"></span>
@@ -183,7 +219,7 @@ $notifications = $stmt_list->get_result();
                                     <p class="text-base font-extrabold text-[#1e293b]"><?= htmlspecialchars($n['notification_type']) ?></p>
                                     <span class="text-[10px] text-pink-300 font-bold uppercase"><?= date('H:i A', strtotime($n['timestamp'])) ?></span>
                                 </div>
-                                <p class="text-sm text-gray-500 font-medium leading-relaxed"><?= htmlspecialchars($n['message']) ?></p>
+                                <p class="text-sm text-gray-500 font-medium leading-relaxed"><?= htmlspecialchars(rtrim($n['message'], '? ')) ?></p>
                                 <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-3"><?= date('d M Y', strtotime($n['timestamp'])) ?></p>
                             </div>
                         </div>

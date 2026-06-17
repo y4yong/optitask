@@ -17,6 +17,15 @@ $user_id = $_SESSION['user_id'];
 $message = "";
 $status_type = "success";
 
+// Check for Unread Notifications for Sidebar Red Dot
+$unread_query = "SELECT COUNT(*) as total FROM notifications WHERE user_id = ? AND status = 'unread'";
+$stmt_unread = $conn->prepare($unread_query);
+$stmt_unread->bind_param("s", $user_id);
+$stmt_unread->execute();
+$unread_count = $stmt_unread->get_result()->fetch_assoc()['total'];
+$stmt_unread->close();
+
+
 // Filter Logic: Default to Manager's Dept (1), or 'all', or specific selection
 $selected_dept = $_GET['dept_filter'] ?? ($_SESSION['dept_id'] ?? 1);
 
@@ -52,13 +61,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['assign_now'])) {
         $priority = $_POST['priority'];
         $start_date = date('Y-m-d'); 
 
-        $query = "INSERT INTO tasks (task_id, task_title, description, start_date, due_date, task_status, priority, employee_id, manager_notes, task_type, task_file) 
-                  VALUES (?, ?, ?, ?, ?, 'To-Do', ?, ?, ?, ?, ?)";
+        $query = "INSERT INTO tasks (task_id, task_title, description, start_date, due_date, task_status, priority, employee_id, manager_notes, task_type, task_file, manager_id) 
+                  VALUES (?, ?, ?, ?, ?, 'To-Do', ?, ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($query);
 
         foreach ($assignees as $emp_id) {
             $task_id = "TK-" . strtoupper(substr(uniqid(), -6)); 
-            $stmt->bind_param("ssssssssss", $task_id, $title, $desc, $start_date, $due_date, $priority, $emp_id, $mgr_notes, $task_type, $target_file);
+            $stmt->bind_param("sssssssssss", $task_id, $title, $desc, $start_date, $due_date, $priority, $emp_id, $mgr_notes, $task_type, $target_file, $_SESSION['user_id']);
             $stmt->execute();
             log_audit($conn, $_SESSION['user_id'], 'ASSIGN_TASK', "Assigned task $task_id to $emp_id");
 
@@ -132,14 +141,49 @@ $employees = $conn->query($sql_emp . " ORDER BY username ASC");
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
   
-  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Quicksand:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   
   <style>
     body { font-family: 'Quicksand', sans-serif; background-color: #FFF5F7; }
+    h1, h2, h3, h4, h5, h6 { font-family: 'Outfit', sans-serif; }
     .pink-gradient { background: linear-gradient(135deg, #FB6F92 0%, #FFB3C6 100%); }
-    .sidebar-active { background: #FFE4EA; border-left: 6px solid #FB6F92; color: #FB6F92; font-weight: 800; border-radius: 0 1.5rem 1.5rem 0; }
-    .sidebar-link { color: #64748b; font-weight: 600; font-size: 0.95rem; }
-    .sidebar-link:hover { color: #FB6F92; background: #FFF0F3; border-radius: 0 1.5rem 1.5rem 0; }
+    
+    /* SIDEBAR UI MATCHED TO ADMIN */
+    .sidebar-active {
+        background: linear-gradient(90deg, rgba(251, 111, 146, 0.08) 0%, rgba(255, 179, 198, 0.02) 100%);
+        border-left: 5px solid #FB6F92;
+        color: #FB6F92;
+        font-weight: 800;
+        border-radius: 0 1rem 1rem 0;
+    }
+    .sidebar-active i { color: #FB6F92; }
+    .sidebar-link {
+        color: #64748b;
+        font-weight: 600;
+        border-left: 5px solid transparent;
+        font-size: 0.95rem;
+    }
+    .sidebar-link:hover {
+        background: #fff1f2;
+        color: #FB6F92;
+        border-radius: 0 1rem 1rem 0;
+    }
+
+    /* Glassmorphism Card styling */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 228, 234, 0.6);
+        border-radius: 2rem;
+        box-shadow: 0 20px 40px rgba(251, 111, 146, 0.03);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .glass-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(251, 111, 146, 0.3);
+        box-shadow: 0 30px 60px rgba(251, 111, 146, 0.07);
+    }
+
     .choices__inner { background-color: #FFF9FA !important; border-radius: 1rem !important; border: 1px solid #FFD1DC !important; min-height: 52px !important; font-weight: 700 !important; }
     .flatpickr-calendar { font-family: 'Quicksand', sans-serif !important; border-radius: 1.5rem !important; border: 2px solid #FFE4EA !important; }
     .flatpickr-day.selected { background: #FB6F92 !important; border-color: #FB6F92 !important; }
@@ -166,7 +210,14 @@ $employees = $conn->query($sql_emp . " ORDER BY username ASC");
 
     <div class="pt-6">
         <p class="text-[11px] uppercase tracking-[0.2em] text-pink-300 font-bold px-8 mb-4">Alerts</p>
-        <a href="notification.php" class="sidebar-link flex items-center gap-4 px-8 py-4 transition-all"><i data-lucide="bell" class="w-5 h-5"></i> Notifications</a>
+        <a href="notification.php" class="sidebar-link flex items-center justify-between px-8 py-4 transition-all">
+            <div class="flex items-center gap-4">
+                <i data-lucide="bell" class="w-5 h-5"></i> Notifications
+            </div>
+            <?php if(isset($unread_count) && $unread_count > 0): ?>
+                <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]"></span>
+            <?php endif; ?>
+        </a>
     </div>
   </nav>
 
@@ -194,7 +245,7 @@ $employees = $conn->query($sql_emp . " ORDER BY username ASC");
 
   <form action="assign_tasks.php" method="POST" enctype="multipart/form-data" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
     <div class="lg:col-span-2 space-y-6">
-      <div class="bg-white rounded-[2.5rem] p-8 shadow-xl shadow-pink-100/50 border border-pink-50 space-y-6">
+      <div class="glass-card p-8 space-y-6">
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           
@@ -290,7 +341,7 @@ $employees = $conn->query($sql_emp . " ORDER BY username ASC");
     </div>
 
     <div class="space-y-6">
-      <div class="bg-white rounded-[2.5rem] p-8 shadow-xl shadow-pink-100/50 border border-pink-50 h-[550px] flex flex-col relative overflow-hidden">
+      <div class="glass-card p-8 h-[550px] flex flex-col relative overflow-hidden">
         <div class="flex items-center gap-2 mb-6 relative">
           <div class="w-3 h-3 rounded-full bg-pink-500 shadow-sm shadow-pink-200"></div>
           <h3 class="font-extrabold text-[#1e293b] text-xl italic tracking-tight">Sticky Notes</h3>

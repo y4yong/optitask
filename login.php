@@ -61,34 +61,50 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OptiTask - Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Quicksand:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
     <style>
         body { font-family: 'Quicksand', sans-serif; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Outfit', sans-serif; }
         .pink-bg { background-color: #FFF5F7; }
         .soft-pink-btn { 
             background: #FF8FAB; 
             box-shadow: 0 4px 15px rgba(255, 143, 171, 0.3);
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .soft-pink-btn:hover { 
             background: #FB6F92; 
             transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(251, 111, 146, 0.4);
         }
         .input-box {
             border: 2px solid #FFE5EC;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .input-box:focus-within {
             border-color: #FF8FAB;
             background-color: #FFF;
+            box-shadow: 0 0 0 4px rgba(255, 143, 171, 0.15);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 228, 234, 0.6);
+            border-radius: 2.5rem;
+            box-shadow: 0 20px 40px rgba(251, 111, 146, 0.03);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(251, 111, 146, 0.3);
+            box-shadow: 0 30px 60px rgba(251, 111, 146, 0.07);
         }
     </style>
 </head>
 <body class="pink-bg flex items-center justify-center min-h-screen p-6">
 
-    <div class="bg-white p-10 rounded-[40px] shadow-2xl w-full max-w-md border border-pink-50">
+    <div class="glass-card p-10 w-full max-w-md">
         <div class="flex flex-col items-center mb-8">
             <div class="w-16 h-16 bg-[#FFB3C6] rounded-2xl flex items-center justify-center shadow-md mb-4">
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

@@ -16,6 +16,15 @@ $user_id = $_SESSION['user_id'];
 $username = $_SESSION['username'];
 $active = 'dashboard';
 
+// Check for Unread Notifications for Sidebar Red Dot
+$unread_query = "SELECT COUNT(*) as total FROM notifications WHERE user_id = ? AND status = 'unread'";
+$stmt_unread = $conn->prepare($unread_query);
+$stmt_unread->bind_param("s", $user_id);
+$stmt_unread->execute();
+$unread_count = $stmt_unread->get_result()->fetch_assoc()['total'];
+$stmt_unread->close();
+
+
 // 2. Fetch Personal Performance (Dynamic Calculation)
 $perf_query = "SELECT task_status FROM tasks WHERE employee_id = ?";
 $stmt_perf = $conn->prepare($perf_query);
@@ -40,17 +49,7 @@ $stmt_task->bind_param("s", $user_id);
 $stmt_task->execute();
 $tasks = $stmt_task->get_result();
 
-// 4. Handle Status Update Logic
-if (isset($_POST['update_status'])) {
-    $t_id = $_POST['task_id'];
-    $new_status = $_POST['new_status'];
-    $update_sql = "UPDATE tasks SET task_status = ? WHERE task_id = ? AND employee_id = ?";
-    $upd_stmt = $conn->prepare($update_sql);
-    $upd_stmt->bind_param("sss", $new_status, $t_id, $user_id);
-    $upd_stmt->execute();
-    header("Location: dashboard_employee.php"); 
-    exit();
-}
+
 ?>
 
 <!DOCTYPE html>
@@ -62,21 +61,48 @@ if (isset($_POST['update_status'])) {
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Quicksand:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
         body { font-family: 'Quicksand', sans-serif; background-color: #FFF5F7; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Outfit', sans-serif; }
         .pink-gradient { background: linear-gradient(135deg, #FB6F92 0%, #FFB3C6 100%); }
         
+        /* SIDEBAR UI MATCHED TO ADMIN */
         .sidebar-active {
-            background: #FFE4EA; 
-            border-left: 6px solid #FB6F92;
+            background: linear-gradient(90deg, rgba(251, 111, 146, 0.08) 0%, rgba(255, 179, 198, 0.02) 100%);
+            border-left: 5px solid #FB6F92;
             color: #FB6F92;
             font-weight: 800;
-            border-radius: 0 1.5rem 1.5rem 0;
+            border-radius: 0 1rem 1rem 0;
         }
-        .sidebar-link { color: #64748b; font-weight: 600; font-size: 0.95rem; }
-        .sidebar-link:hover { color: #FB6F92; background: #FFF0F3; border-radius: 0 1.5rem 1.5rem 0; }
+        .sidebar-active i { color: #FB6F92; }
+        .sidebar-link {
+            color: #64748b;
+            font-weight: 600;
+            border-left: 5px solid transparent;
+            font-size: 0.95rem;
+        }
+        .sidebar-link:hover {
+            background: #fff1f2;
+            color: #FB6F92;
+            border-radius: 0 1rem 1rem 0;
+        }
+
+        /* Glassmorphism Card styling */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 228, 234, 0.6);
+            border-radius: 2rem;
+            box-shadow: 0 20px 40px rgba(251, 111, 146, 0.03);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(251, 111, 146, 0.3);
+            box-shadow: 0 30px 60px rgba(251, 111, 146, 0.07);
+        }
         
         .status-select {
             appearance: none;
@@ -114,13 +140,25 @@ if (isset($_POST['update_status'])) {
             <i data-lucide="clipboard-list" class="w-5 h-5"></i> My Tasks
         </a>
 
+        <a href="update_tasks.php" class="sidebar-link flex items-center gap-4 px-8 py-4 transition-all">
+            <i data-lucide="check-circle" class="w-5 h-5"></i> Submissions
+        </a>
+
         <div class="pt-6">
             <p class="text-[11px] uppercase tracking-[0.2em] text-pink-300 font-bold px-8 mb-4">Account</p>
+            <a href="skills.php" class="sidebar-link flex items-center gap-4 px-8 py-4 transition-all">
+                <i data-lucide="user" class="w-5 h-5"></i> Profile
+            </a>
             <a href="performance.php" class="sidebar-link flex items-center gap-4 px-8 py-4 transition-all">
                 <i data-lucide="bar-chart-3" class="w-5 h-5"></i> Performance
             </a>
-            <a href="notification.php" class="sidebar-link flex items-center gap-4 px-8 py-4 transition-all">
-                <i data-lucide="bell" class="w-5 h-5"></i> Notifications
+            <a href="notification.php" class="sidebar-link flex items-center justify-between px-8 py-4 transition-all">
+                <div class="flex items-center gap-4">
+                    <i data-lucide="bell" class="w-5 h-5"></i> Notifications
+                </div>
+                <?php if(isset($unread_count) && $unread_count > 0): ?>
+                    <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]"></span>
+                <?php endif; ?>
             </a>
         </div>
     </nav>
@@ -148,7 +186,7 @@ if (isset($_POST['update_status'])) {
     </header>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div class="lg:col-span-2 bg-white rounded-[2.5rem] shadow-xl shadow-pink-100/30 overflow-hidden border border-pink-50">
+        <div class="lg:col-span-2 glass-card overflow-hidden">
             <div class="p-8 border-b border-pink-50 bg-white flex justify-between items-center">
                 <h3 class="font-extrabold text-[#1e293b] text-xl tracking-tight italic flex items-center gap-3">
                     <span class="w-2 h-6 pink-gradient rounded-full"></span>
@@ -164,7 +202,7 @@ if (isset($_POST['update_status'])) {
                             <th class="px-8 py-5">Task ID</th>
                             <th class="px-8 py-5">Project Details</th>
                             <th class="px-8 py-5">Deadline</th>
-                            <th class="px-8 py-5 text-right">Update Status</th>
+                            <th class="px-8 py-5 text-right">Action</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-pink-50">
@@ -185,15 +223,10 @@ if (isset($_POST['update_status'])) {
                                     </div>
                                 </td>
                                 <td class="px-8 py-6 text-right">
-                                    <form method="POST" class="inline-block">
-                                        <input type="hidden" name="task_id" value="<?= $row['task_id'] ?>">
-                                        <select name="new_status" onchange="this.form.submit()" class="status-select bg-[#FBFBFC] border-2 border-pink-50 rounded-xl px-4 py-2.5 text-xs font-black text-[#1e293b] outline-none focus:border-[#FB6F92] cursor-pointer transition-all pr-8">
-                                            <option value="To-Do" <?= $row['task_status'] == 'To-Do' ? 'selected' : '' ?>>To-Do</option>
-                                            <option value="In Progress" <?= $row['task_status'] == 'In Progress' ? 'selected' : '' ?>>In Progress</option>
-                                            <option value="Done" <?= $row['task_status'] == 'Done' ? 'selected' : '' ?>>Mark Done</option>
-                                        </select>
-                                        <input type="hidden" name="update_status" value="1">
-                                    </form>
+                                    <a href="tasks.php" class="inline-flex items-center gap-1.5 bg-pink-50 hover:bg-[#FB6F92] text-[#FB6F92] hover:text-white px-4 py-2.5 rounded-xl text-xs font-black transition-all shadow-sm">
+                                        <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                                        Task Details
+                                    </a>
                                 </td>
                             </tr>
                             <?php endwhile; ?>
@@ -213,7 +246,7 @@ if (isset($_POST['update_status'])) {
         </div>
 
         <div class="space-y-8">
-            <div class="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-pink-100/50 border border-pink-50 flex flex-col items-center text-center">
+            <div class="glass-card p-8 flex flex-col items-center text-center">
                 <h4 class="text-[11px] font-black text-pink-300 uppercase tracking-widest mb-8">Efficiency Rating</h4>
                 
                 <div class="relative w-40 h-40 flex items-center justify-center mb-6">
