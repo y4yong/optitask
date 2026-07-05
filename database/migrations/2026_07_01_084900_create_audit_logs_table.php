@@ -11,10 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('departments', function (Blueprint $table) {
-            $table->id('dept_id'); // INT AUTO_INCREMENT PRIMARY KEY
-            $table->string('dept_name', 100)->unique();
-            $table->text('description')->nullable();
+        Schema::create('audit_logs', function (Blueprint $table) {
+            $table->id('log_id');
+            $table->string('user_id', 50)->default('SYSTEM');
+            $table->string('action', 50)->nullable();
+            $table->text('details')->nullable();
+            $table->timestamp('timestamp')->useCurrent();
             $table->timestamps();
         });
     }
@@ -24,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('departments');
+        Schema::dropIfExists('audit_logs');
     }
 };

@@ -11,10 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('departments', function (Blueprint $table) {
-            $table->id('dept_id'); // INT AUTO_INCREMENT PRIMARY KEY
-            $table->string('dept_name', 100)->unique();
-            $table->text('description')->nullable();
+        Schema::create('skills', function (Blueprint $table) {
+            $table->id('skill_id');
+            $table->string('skill_name', 100)->unique();
             $table->timestamps();
         });
     }
@@ -24,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('departments');
+        Schema::dropIfExists('skills');
     }
 };
