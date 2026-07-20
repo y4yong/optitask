@@ -325,6 +325,45 @@ class EmployeeController extends Controller
     }
 
     /**
+     * Update User Email (maximum 3 attempts).
+     */
+    public function updateEmail(Request $request)
+    {
+        $user = Auth::user();
+        $userId = Auth::id();
+
+        if ($user->email_updates_remaining <= 0) {
+            return back()->with('error', 'Error: You have no email update attempts remaining.');
+        }
+
+        $request->validate([
+            'email' => 'required|email|max:100|unique:users,email,' . $userId . ',user_id'
+        ]);
+
+        $newEmail = $request->input('email');
+
+        if ($newEmail === $user->email) {
+            return back()->with('success', 'Email was not changed.');
+        }
+
+        $oldEmail = $user->email;
+        
+        DB::transaction(function() use ($user, $newEmail, $userId, $oldEmail) {
+            // Decrement remaining attempts
+            $remaining = $user->email_updates_remaining - 1;
+            
+            $user->update([
+                'email' => $newEmail,
+                'email_updates_remaining' => $remaining
+            ]);
+            
+            AuditLog::log($userId, 'UPDATE_EMAIL', "Changed email from {$oldEmail} to {$newEmail}. Remaining attempts: {$remaining}");
+        });
+
+        return back()->with('success', 'Email address updated successfully. Attempts remaining: ' . $user->email_updates_remaining);
+    }
+
+    /**
      * Employee Performance stats & insights.
      */
     public function performance()

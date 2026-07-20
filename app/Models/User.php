@@ -32,6 +32,7 @@ class User extends Authenticatable
         'account_status',
         'suspension_reason',
         'dept_id',
+        'email_updates_remaining',
     ];
 
     /**

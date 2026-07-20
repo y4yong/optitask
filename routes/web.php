@@ -64,6 +64,7 @@ Route::middleware(['auth', 'role:Employee'])->prefix('employee')->name('employee
     Route::post('/profile/save-skill', [EmployeeController::class, 'saveSkill'])->name('save_skill');
     Route::post('/profile/delete-skill', [EmployeeController::class, 'deleteSkill'])->name('delete_skill');
     Route::post('/profile/save-department', [EmployeeController::class, 'saveDepartment'])->name('save_department');
+    Route::post('/profile/update-email', [EmployeeController::class, 'updateEmail'])->name('update_email');
     Route::get('/performance', [EmployeeController::class, 'performance'])->name('performance');
     Route::get('/notifications', [EmployeeController::class, 'notifications'])->name('notification');
     Route::post('/ai-coach', [EmployeeController::class, 'aiCoach'])->name('ai_coach');

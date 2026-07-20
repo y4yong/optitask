@@ -106,8 +106,40 @@
                             <p class="text-sm font-extrabold text-gray-700">{{ $user->username }}</p>
                         </div>
                         <div>
-                            <p class="text-[9px] font-black text-gray-400 uppercase tracking-wider">Email Address</p>
-                            <p class="text-sm font-extrabold text-gray-700">{{ $user->email }}</p>
+                            <div class="flex justify-between items-center">
+                                <p class="text-[9px] font-black text-gray-400 uppercase tracking-wider">Email Address</p>
+                                <span class="text-[9px] font-black uppercase tracking-wider {{ $user->email_updates_remaining > 0 ? 'text-pink-400' : 'text-red-400' }}">
+                                    {{ $user->email_updates_remaining }} {{ Str::plural('attempt', $user->email_updates_remaining) }} left
+                                </span>
+                            </div>
+                            
+                            <div id="email-display-wrapper" class="{{ $errors->has('email') ? 'hidden' : 'flex' }} justify-between items-center mt-1">
+                                <p class="text-sm font-extrabold text-gray-700 truncate max-w-[200px]" title="{{ $user->email }}">{{ $user->email }}</p>
+                                @if ($user->email_updates_remaining > 0)
+                                    <button onclick="toggleEmailEdit(true)" class="text-pink-400 hover:text-[#FB6F92] transition-colors p-1" title="Edit Email">
+                                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                    </button>
+                                @endif
+                            </div>
+
+                            @if ($user->email_updates_remaining > 0)
+                                <form id="email-edit-form" action="{{ route('employee.update_email') }}" method="POST" class="{{ $errors->has('email') ? '' : 'hidden' }} mt-2 flex items-center gap-2">
+                                    @csrf
+                                    <input type="email" name="email" value="{{ old('email', $user->email) }}" required 
+                                        class="flex-1 bg-[#FFF9FA] border border-pink-100 rounded-xl px-3 py-1.5 text-xs font-bold text-gray-700 outline-none focus:border-[#FB6F92] min-w-0">
+                                    <button type="submit" class="pink-gradient text-white px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider shadow-sm hover:scale-[1.02] transition-transform shrink-0">
+                                        Save
+                                    </button>
+                                    <button type="button" onclick="toggleEmailEdit(false)" class="bg-gray-100 text-gray-500 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider shadow-sm hover:bg-gray-200 transition-colors shrink-0">
+                                        Cancel
+                                    </button>
+                                </form>
+                                @error('email')
+                                    <p class="text-[10px] text-red-400 font-bold mt-1">{{ $message }}</p>
+                                @enderror
+                            @else
+                                <p class="text-[10px] text-red-400 font-bold mt-1 uppercase tracking-wider">Maximum attempts reached.</p>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -150,6 +182,18 @@
 
 @section('scripts')
 <script>
+    function toggleEmailEdit(show) {
+        const display = document.getElementById('email-display-wrapper');
+        const form = document.getElementById('email-edit-form');
+        if (show) {
+            display.classList.add('hidden');
+            form.classList.remove('hidden');
+        } else {
+            display.classList.remove('hidden');
+            form.classList.add('hidden');
+        }
+    }
+
     function confirmDeleteSkill(skillId, name) {
         Swal.fire({
             title: 'Remove Skill?',
