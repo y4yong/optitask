@@ -46,15 +46,26 @@
                         </td>
                         <td class="px-8 py-6">
                             <p class="text-sm font-extrabold text-[#1e293b]">{{ $row->task_title }}</p>
-                            @if(!empty($row->evidence_link))
-                                <a href="{{ $row->evidence_link }}" target="_blank" class="text-[10px] text-blue-500 font-bold flex items-center gap-1 mt-1 hover:underline">
-                                    <i data-lucide="link" class="w-3 h-3"></i> View Evidence Link
-                                </a>
-                            @elseif(!empty($row->submission_file))
-                                <a href="{{ asset('storage/' . $row->submission_file) }}" target="_blank" class="text-[10px] text-blue-500 font-bold flex items-center gap-1 mt-1 hover:underline">
-                                    <i data-lucide="file-text" class="w-3 h-3"></i> View Submission File
-                                </a>
-                            @endif
+                            <div class="flex flex-col gap-1.5 mt-2">
+                                @if(!empty($row->task_file))
+                                    <a href="{{ $row->task_file_url }}" target="_blank" class="text-[11px] text-blue-600 font-bold flex items-center gap-1.5 hover:underline bg-blue-50/70 px-2.5 py-1 rounded-lg w-fit">
+                                        <i data-lucide="file-text" class="w-3.5 h-3.5 text-blue-500"></i> Manager File: {{ basename($row->task_file) }}
+                                    </a>
+                                @endif
+                                @if(!empty($row->submission_file))
+                                    <a href="{{ $row->submission_file_url }}" target="_blank" class="text-[11px] text-emerald-600 font-bold flex items-center gap-1.5 hover:underline bg-emerald-50/70 px-2.5 py-1 rounded-lg w-fit">
+                                        <i data-lucide="file-check" class="w-3.5 h-3.5 text-emerald-500"></i> Submission File: {{ basename($row->submission_file) }}
+                                    </a>
+                                @endif
+                                @if(!empty($row->evidence_link))
+                                    <a href="{{ $row->evidence_link }}" target="_blank" class="text-[11px] text-purple-600 font-bold flex items-center gap-1.5 hover:underline bg-purple-50/70 px-2.5 py-1 rounded-lg w-fit max-w-[280px] truncate" title="{{ $row->evidence_link }}">
+                                        <i data-lucide="link" class="w-3.5 h-3.5 text-purple-500"></i> Evidence Link
+                                    </a>
+                                @endif
+                                @if(empty($row->task_file) && empty($row->submission_file) && empty($row->evidence_link))
+                                    <span class="text-[10px] text-gray-400 font-semibold italic">No attachments</span>
+                                @endif
+                            </div>
                         </td>
                         <td class="px-8 py-6 text-right">
                             <div class="flex justify-end gap-3">

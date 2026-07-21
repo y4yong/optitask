@@ -95,7 +95,7 @@ class EmployeeController extends Controller
                 'priority' => strtoupper($row->priority),
                 'desc'     => $row->description,
                 'notes'    => $row->manager_notes ?? '',
-                'task_file' => $row->task_file ? asset('storage/' . $row->task_file) : ''
+                'task_file' => $row->task_file_url ?? ''
             ];
         }
 
@@ -163,6 +163,10 @@ class EmployeeController extends Controller
             $file = $request->file('attachment');
             $filename = time() . '_' . $file->getClientOriginalName();
             $path = $file->storeAs('uploads/submissions', $filename, 'public');
+            if ($path) {
+                @mkdir(public_path('uploads/submissions'), 0777, true);
+                @copy(storage_path('app/public/' . $path), public_path($path));
+            }
         }
 
         $task->update([

@@ -146,7 +146,7 @@
                     </td>
                     <td class="p-4">
                       @if ($t->task_file)
-                        <a href="{{ asset('storage/' . $t->task_file) }}" target="_blank" class="text-xs text-blue-500 hover:underline flex items-center gap-1">
+                        <a href="{{ $t->task_file_url }}" target="_blank" class="text-xs text-blue-500 hover:underline flex items-center gap-1 font-bold">
                           <i data-lucide="file" class="w-3.5 h-3.5"></i> View File
                         </a>
                       @else
@@ -154,13 +154,21 @@
                       @endif
                     </td>
                     <td class="p-4">
-                      @if ($t->submission_file)
-                        <a href="{{ asset('storage/' . $t->submission_file) }}" target="_blank" class="text-xs text-green-600 hover:underline flex items-center gap-1">
-                          <i data-lucide="file-check" class="w-3.5 h-3.5"></i> Download
-                        </a>
-                      @else
-                        <span class="text-xs text-gray-400">Not Submitted</span>
-                      @endif
+                      <div class="flex flex-col gap-1">
+                        @if ($t->submission_file)
+                          <a href="{{ $t->submission_file_url }}" target="_blank" class="text-xs text-green-600 hover:underline flex items-center gap-1 font-bold">
+                            <i data-lucide="file-check" class="w-3.5 h-3.5"></i> File
+                          </a>
+                        @endif
+                        @if ($t->evidence_link)
+                          <a href="{{ $t->evidence_link }}" target="_blank" class="text-xs text-purple-600 hover:underline flex items-center gap-1 font-bold" title="{{ $t->evidence_link }}">
+                            <i data-lucide="link" class="w-3.5 h-3.5"></i> Link
+                          </a>
+                        @endif
+                        @if (!$t->submission_file && !$t->evidence_link)
+                          <span class="text-xs text-gray-400">Not Submitted</span>
+                        @endif
+                      </div>
                     </td>
                     <td class="p-4 pr-6 text-right">
                       @php

@@ -46,4 +46,30 @@ class Task extends Model
     {
         return $this->belongsTo(User::class, 'manager_id', 'user_id');
     }
+
+    /**
+     * Get accessible HTTP URL for task_file
+     */
+    public function getTaskFileUrlAttribute()
+    {
+        if (!$this->task_file) return null;
+        if (str_starts_with($this->task_file, 'http://') || str_starts_with($this->task_file, 'https://')) {
+            return $this->task_file;
+        }
+        $cleanPath = preg_replace('#^(\.\./|\./|storage/)*#', '', $this->task_file);
+        return asset($cleanPath);
+    }
+
+    /**
+     * Get accessible HTTP URL for submission_file
+     */
+    public function getSubmissionFileUrlAttribute()
+    {
+        if (!$this->submission_file) return null;
+        if (str_starts_with($this->submission_file, 'http://') || str_starts_with($this->submission_file, 'https://')) {
+            return $this->submission_file;
+        }
+        $cleanPath = preg_replace('#^(\.\./|\./|storage/)*#', '', $this->submission_file);
+        return asset($cleanPath);
+    }
 }

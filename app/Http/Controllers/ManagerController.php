@@ -30,18 +30,26 @@ class ManagerController extends Controller
         $departments = Department::orderBy('dept_name', 'asc')->get();
 
         // 1. Stats
-        $totalTasks = Task::where('manager_id', $userId)->count();
-        $totalEmployees = Task::where('manager_id', $userId)->distinct('employee_id')->count('employee_id');
-        $totalVerified = Task::where('manager_id', $userId)->where('task_status', 'Verified')->count();
+        $hasOwnTasks = Task::where('manager_id', $userId)->exists();
+        $taskQuery = Task::with('employee');
+        if ($hasOwnTasks) {
+            $taskQuery->where(function($q) use ($userId) {
+                $q->where('manager_id', $userId)
+                  ->orWhereNull('manager_id')
+                  ->orWhere('manager_id', '');
+            });
+        }
+
+        $totalTasks = (clone $taskQuery)->count();
+        $totalEmployees = (clone $taskQuery)->distinct('employee_id')->count('employee_id');
+        $totalVerified = (clone $taskQuery)->where('task_status', 'Verified')->count();
 
         // Tasks Lists
-        $assignedTasks = Task::with('employee')
-            ->where('manager_id', $userId)
+        $assignedTasks = (clone $taskQuery)
             ->orderBy('due_date', 'desc')
             ->get();
 
-        $verifiedTasks = Task::with('employee')
-            ->where('manager_id', $userId)
+        $verifiedTasks = (clone $taskQuery)
             ->where('task_status', 'Verified')
             ->orderBy('due_date', 'desc')
             ->get();
@@ -156,12 +164,16 @@ class ManagerController extends Controller
             return back()->withErrors(['assignee' => 'Error: Personal tasks can only have 1 assignee!'])->withInput();
         }
 
-        // Upload attachment to storage/app/public so it's accessible via storage symlink
+        // Upload attachment to storage and ensure accessible in public/uploads/tasks
         $targetFile = null;
         if ($request->hasFile('task_file')) {
             $file = $request->file('task_file');
             $filename = time() . '_' . $file->getClientOriginalName();
             $targetFile = $file->storeAs('uploads/tasks', $filename, 'public');
+            if ($targetFile) {
+                @mkdir(public_path('uploads/tasks'), 0777, true);
+                @copy(storage_path('app/public/' . $targetFile), public_path($targetFile));
+            }
         }
 
         $title = $request->input('task_title');
@@ -236,10 +248,20 @@ class ManagerController extends Controller
     {
         $userId = Auth::id();
 
-        $tasks = Task::with('employee')
-            ->where('manager_id', $userId)
-            ->whereIn('task_status', ['Review', 'Done', 'Verified'])
-            ->orderByRaw("CASE 
+        $hasOwnTasks = Task::where('manager_id', $userId)->whereIn('task_status', ['Review', 'Done', 'Verified'])->exists();
+
+        $query = Task::with(['employee', 'manager'])
+            ->whereIn('task_status', ['Review', 'Done', 'Verified']);
+
+        if ($hasOwnTasks) {
+            $query->where(function($q) use ($userId) {
+                $q->where('manager_id', $userId)
+                  ->orWhereNull('manager_id')
+                  ->orWhere('manager_id', '');
+            });
+        }
+
+        $tasks = $query->orderByRaw("CASE 
                 WHEN task_status IN ('Review', 'Done') THEN 1 
                 ELSE 2 
              END ASC")
