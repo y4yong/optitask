@@ -92,13 +92,16 @@
                 data-search="{{ strtolower($user->user_id . ' ' . $user->username) }}"
                 onclick="openEditor('{{ $user->user_id }}', '{{ addslashes($user->username) }}', '{{ $user->role }}', '{{ $user->account_status }}', '{{ addslashes($user->suspension_reason ?? '') }}', '{{ $user->dept_id ?? '' }}')">
               <td class="px-8 py-5">
-                <div class="flex items-center gap-3 group">
+                <div class="flex items-center gap-3 group cursor-pointer"
+                     onclick="event.stopPropagation(); openEditor('{{ $user->user_id }}', '{{ addslashes($user->username) }}', '{{ $user->role }}', '{{ $user->account_status }}', '{{ addslashes($user->suspension_reason ?? '') }}', '{{ $user->dept_id ?? '' }}', '{{ addslashes($user->email ?? '') }}', '{{ addslashes($user->department->dept_name ?? '') }}'); showUserDetails('{{ $user->user_id }}', '{{ addslashes($user->username) }}', '{{ addslashes($user->email ?? '') }}', '{{ $user->role }}', '{{ $user->account_status }}', '{{ addslashes($user->suspension_reason ?? '') }}', '{{ $user->dept_id ?? '' }}', '{{ addslashes($user->department->dept_name ?? '') }}');"
+                     title="Click to view full profile">
                   <div class="w-10 h-10 rounded-xl bg-pink-50 text-[#FB6F92] flex items-center justify-center font-black text-xs uppercase shadow-sm border border-pink-100 group-hover:scale-105 transition-all">
                       {{ substr($user->username, 0, 2) }}
                   </div>
                   <div>
-                    <p class="text-sm font-black text-gray-800 group-hover:text-[#FB6F92] transition-colors">
+                    <p class="text-sm font-black text-gray-800 group-hover:text-[#FB6F92] transition-colors flex items-center gap-1.5">
                         {{ $user->username }}
+                        <i data-lucide="external-link" class="w-3 h-3 text-pink-300 opacity-0 group-hover:opacity-100 transition-opacity"></i>
                     </p>
                     <span class="text-[9px] font-mono text-gray-400 font-bold tracking-widest mt-0.5 inline-block">#{{ $user->user_id }}</span>
                   </div>
@@ -170,7 +173,12 @@
             <div id="update-form-route-placeholder"></div>
             
             <div>
-              <label class="text-[10px] font-black text-pink-300 uppercase tracking-widest ml-1">Selected User</label>
+              <div class="flex justify-between items-center ml-1">
+                <label class="text-[10px] font-black text-pink-300 uppercase tracking-widest">Selected User</label>
+                <button type="button" id="btn-view-full-profile" class="text-[10px] font-bold text-blue-500 hover:text-blue-700 flex items-center gap-1 hover:underline">
+                  <i data-lucide="eye" class="w-3 h-3"></i> Full Profile
+                </button>
+              </div>
               <input id="edit_display_user" class="mt-2 w-full bg-[#FFF9FA] border-2 border-pink-50 rounded-2xl px-5 py-4 text-xs font-bold text-gray-700 outline-none" readonly />
             </div>
 
@@ -352,7 +360,7 @@
       }
   }
 
-  function openEditor(userId, username, role, status, reason, deptId) {
+  function openEditor(userId, username, role, status, reason, deptId, email = '', deptName = '') {
       // Highlight active table row
       document.querySelectorAll('.user-row').forEach(r => r.classList.remove('bg-pink-50/80', 'border-l-4', 'border-[#FB6F92]'));
       const targetRow = document.getElementById('user-row-' + userId);
@@ -362,6 +370,14 @@
 
       document.getElementById('editor-placeholder').classList.add('hidden');
       document.getElementById('editor-form-container').classList.remove('hidden');
+
+      // Bind Full Profile button handler
+      const btnViewProfile = document.getElementById('btn-view-full-profile');
+      if (btnViewProfile) {
+          btnViewProfile.onclick = function() {
+              showUserDetails(userId, username, email, role, status, reason, deptId, deptName);
+          };
+      }
 
       // Set Route Actions dynamically
       let updateRoute = "{{ route('admin.update_user', ['user_id' => ':user_id']) }}".replace(':user_id', userId);
