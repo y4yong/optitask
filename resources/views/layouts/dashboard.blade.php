@@ -59,26 +59,43 @@
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #FFF5F7; }
         ::-webkit-scrollbar-thumb { background: #FFD1DC; border-radius: 10px; }
+
+        /* Sidebar slide-in for mobile */
+        #sidebar {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        #sidebar-overlay {
+            transition: opacity 0.3s ease;
+        }
     </style>
     @yield('styles')
 </head>
 <body class="flex h-screen overflow-hidden">
 
-<aside class="w-72 bg-white border-r border-pink-100 flex flex-col shrink-0">
-    <div class="p-8 pb-10 flex items-center gap-3">
+<!-- Mobile Overlay -->
+<div id="sidebar-overlay" class="fixed inset-0 bg-black/40 z-20 hidden lg:hidden" onclick="closeSidebar()"></div>
+
+<!-- Sidebar -->
+<aside id="sidebar" class="fixed lg:static z-30 w-72 h-full bg-white border-r border-pink-100 flex flex-col shrink-0 -translate-x-full lg:translate-x-0 transition-transform duration-300">
+
+    <div class="p-8 pb-6 flex items-center gap-3">
         <div class="w-12 h-12 pink-gradient rounded-2xl flex items-center justify-center text-white shadow-lg shadow-pink-100">
             <i data-lucide="zap" class="w-6 h-6"></i>
         </div>
         <span class="text-2xl font-bold tracking-tight text-[#1e293b]">
             OptiTask<span class="text-[#FB6F92]">.</span>
         </span>
+        <!-- Close button — mobile only -->
+        <button onclick="closeSidebar()" class="ml-auto lg:hidden w-8 h-8 flex items-center justify-center rounded-xl text-pink-300 hover:text-pink-500 hover:bg-pink-50">
+            <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
     </div>
 
     @php
         $unreadNotificationCount = \App\Models\Notification::where('user_id', auth()->id())->where('status', 'unread')->count();
     @endphp
 
-    <nav class="flex-1 space-y-2 pr-4 overflow-y-auto">
+    <nav class="flex-1 space-y-1 pr-4 overflow-y-auto">
         @if(auth()->user()->role === 'Admin')
             <p class="text-[11px] uppercase tracking-[0.2em] text-pink-300 font-bold px-8 mb-4">Admin Console</p>
             <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-4 px-8 py-4 transition-all {{ request()->routeIs('admin.dashboard') ? 'sidebar-active' : 'sidebar-link' }}">
@@ -111,7 +128,7 @@
                 @endif
             </a>
 
-        @elseif(auth()->user()->role === 'Employee')
+        @elseif(auth()->user()->role === 'Employee' || auth()->user()->role === 'employee')
             <p class="text-[11px] uppercase tracking-[0.2em] text-pink-300 font-bold px-8 mb-4">Employee Console</p>
             <a href="{{ route('employee.dashboard') }}" class="flex items-center gap-4 px-8 py-4 transition-all {{ request()->routeIs('employee.dashboard') ? 'sidebar-active' : 'sidebar-link' }}">
                 <i data-lucide="layout-grid" class="w-5 h-5"></i> Dashboard
@@ -142,26 +159,58 @@
 
     <div class="p-6">
         <div class="bg-[#FFF9FA] rounded-[1.5rem] p-4 flex items-center gap-3 border border-pink-100">
-            <div class="w-10 h-10 rounded-full bg-white border-2 border-pink-200 text-[#FB6F92] flex items-center justify-center font-bold text-sm">
+            <div class="w-10 h-10 rounded-full bg-white border-2 border-pink-200 text-[#FB6F92] flex items-center justify-center font-bold text-sm shrink-0">
                 {{ strtoupper(substr(auth()->user()->username, 0, 2)) }}
             </div>
             <div class="flex-1 min-w-0">
                 <p class="text-sm font-extrabold text-[#1e293b] truncate">{{ auth()->user()->username }}</p>
                 <p class="text-[11px] text-pink-400 font-bold uppercase tracking-wider">{{ auth()->user()->user_id }}</p>
             </div>
-            <button id="logout-trigger">
-                <i data-lucide="log-out" class="w-5 h-5 text-pink-200 hover:text-red-500 cursor-pointer"></i>
+            <button id="logout-trigger" class="shrink-0">
+                <i data-lucide="log-out" class="w-5 h-5 text-pink-200 hover:text-red-500 cursor-pointer transition-colors"></i>
             </button>
         </div>
     </div>
 </aside>
 
-<main class="flex-1 overflow-y-auto p-12">
-    @yield('content')
-</main>
+<!-- Main Wrapper (takes remaining width) -->
+<div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+    <!-- Mobile Top Bar -->
+    <header class="lg:hidden flex items-center gap-3 px-4 py-3 bg-white border-b border-pink-100 shrink-0">
+        <button onclick="openSidebar()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-pink-50 text-[#FB6F92] hover:bg-pink-100 transition-colors">
+            <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 pink-gradient rounded-xl flex items-center justify-center text-white shadow shadow-pink-100 shrink-0">
+                <i data-lucide="zap" class="w-4 h-4"></i>
+            </div>
+            <span class="text-lg font-bold tracking-tight text-[#1e293b]">OptiTask<span class="text-[#FB6F92]">.</span></span>
+        </div>
+    </header>
+
+    <!-- Page Content -->
+    <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-12">
+        @yield('content')
+    </main>
+</div>
 
 <script>
     lucide.createIcons();
+
+    function openSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        sidebar.classList.remove('-translate-x-full');
+        overlay.classList.remove('hidden');
+    }
+
+    function closeSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
+    }
 
     document.getElementById('logout-trigger').addEventListener('click', function() {
         Swal.fire({
