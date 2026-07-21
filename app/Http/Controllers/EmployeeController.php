@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use App\Models\User;
 use App\Models\Task;
 use App\Models\Department;
@@ -196,24 +197,28 @@ class EmployeeController extends Controller
                 'status' => 'unread'
             ]);
 
-            // Send SMTP mail to Manager
+            // Send SMTP mail to Manager (wrapped — SMTP failure must not crash the request)
             if ($mgr->email) {
-                $emailContent = "<strong>Task:</strong> " . e($task->task_title) . " (#{$tid})<br>" .
-                                 "<strong>Submitted By:</strong> " . e($user->username) . " ({$userId})<br>";
-                if ($path) {
-                    $emailContent .= "<strong>Attached File:</strong> " . e(basename($path)) . "<br>";
-                }
-                if ($evidence) {
-                    $emailContent .= "<strong>Evidence Link:</strong> <a href='" . e($evidence) . "'>" . e($evidence) . "</a><br>";
-                }
-                $emailContent .= "<br><strong>Details:</strong> The employee has completed the task and submitted it for verification.";
+                try {
+                    $emailContent = "<strong>Task:</strong> " . e($task->task_title) . " (#{$tid})<br>" .
+                                     "<strong>Submitted By:</strong> " . e($user->username) . " ({$userId})<br>";
+                    if ($path) {
+                        $emailContent .= "<strong>Attached File:</strong> " . e(basename($path)) . "<br>";
+                    }
+                    if ($evidence) {
+                        $emailContent .= "<strong>Evidence Link:</strong> <a href='" . e($evidence) . "'>" . e($evidence) . "</a><br>";
+                    }
+                    $emailContent .= "<br><strong>Details:</strong> The employee has completed the task and submitted it for verification.";
 
-                Mail::send('emails.notification', [
-                    'to_name' => $mgr->username,
-                    'message_content' => $emailContent
-                ], function($message) use ($mgr, $task) {
-                    $message->to($mgr->email)->subject("Task Submission: {$task->task_title}");
-                });
+                    Mail::send('emails.notification', [
+                        'to_name' => $mgr->username,
+                        'message_content' => $emailContent
+                    ], function($message) use ($mgr, $task) {
+                        $message->to($mgr->email)->subject("Task Submission: {$task->task_title}");
+                    });
+                } catch (\Exception $e) {
+                    Log::error('Task submission email failed for manager ' . $mgr->user_id . ': ' . $e->getMessage());
+                }
             }
         }
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use App\Models\User;
 use App\Models\Task;
 use App\Models\Department;
@@ -200,21 +201,25 @@ class ManagerController extends Controller
                 'status' => 'unread'
             ]);
 
-            // Email Notification
+            // Email Notification (wrapped — SMTP failure must not crash the request)
             $emp = User::find($empId);
             if ($emp && $emp->email) {
-                $formattedDue = date('d-m-Y', strtotime($dueDate));
-                $emailContent = "<strong>Task:</strong> " . e($title) . "<br>" .
-                                 "<strong>Assignee:</strong> " . e($emp->username) . " ({$empId})<br>" .
-                                 "<strong>Due Date:</strong> {$formattedDue}<br><br>" .
-                                 "<strong>Details:</strong> " . nl2br(e($desc ?? 'No instructions provided.'));
+                try {
+                    $formattedDue = date('d-m-Y', strtotime($dueDate));
+                    $emailContent = "<strong>Task:</strong> " . e($title) . "<br>" .
+                                     "<strong>Assignee:</strong> " . e($emp->username) . " ({$empId})<br>" .
+                                     "<strong>Due Date:</strong> {$formattedDue}<br><br>" .
+                                     "<strong>Details:</strong> " . nl2br(e($desc ?? 'No instructions provided.'));
 
-                Mail::send('emails.notification', [
-                    'to_name' => $emp->username,
-                    'message_content' => $emailContent
-                ], function($message) use ($emp, $title) {
-                    $message->to($emp->email)->subject("New Task Assigned: {$title}");
-                });
+                    Mail::send('emails.notification', [
+                        'to_name' => $emp->username,
+                        'message_content' => $emailContent
+                    ], function($message) use ($emp, $title) {
+                        $message->to($emp->email)->subject("New Task Assigned: {$title}");
+                    });
+                } catch (\Exception $e) {
+                    Log::error('Task assignment email failed for ' . $empId . ': ' . $e->getMessage());
+                }
             }
         }
 
@@ -272,14 +277,18 @@ class ManagerController extends Controller
                 'status' => 'unread'
             ]);
 
-            // Email employee
+            // Email employee (wrapped — SMTP failure must not crash the request)
             if ($task->employee && $task->employee->email) {
-                Mail::send('emails.notification', [
-                    'to_name' => $task->employee->username,
-                    'message_content' => "Your submission for task '#{$taskId} - {$task->task_title}' was <strong>APPROVED</strong> by the manager.<br>Notes: " . nl2br(e($mgrNotes))
-                ], function($message) use ($task) {
-                    $message->to($task->employee->email)->subject("Task Approved: {$task->task_title}");
-                });
+                try {
+                    Mail::send('emails.notification', [
+                        'to_name' => $task->employee->username,
+                        'message_content' => "Your submission for task '#{$taskId} - {$task->task_title}' was <strong>APPROVED</strong> by the manager.<br>Notes: " . nl2br(e($mgrNotes))
+                    ], function($message) use ($task) {
+                        $message->to($task->employee->email)->subject("Task Approved: {$task->task_title}");
+                    });
+                } catch (\Exception $e) {
+                    Log::error('Task approval email failed for task ' . $task->task_id . ': ' . $e->getMessage());
+                }
             }
 
             return back()->with('success', "Task {$taskId} successfully approved.");
@@ -298,14 +307,18 @@ class ManagerController extends Controller
                 'status' => 'unread'
             ]);
 
-            // Email employee
+            // Email employee (wrapped — SMTP failure must not crash the request)
             if ($task->employee && $task->employee->email) {
-                Mail::send('emails.notification', [
-                    'to_name' => $task->employee->username,
-                    'message_content' => "Your submission for task '#{$taskId} - {$task->task_title}' was <strong>REJECTED</strong>. Please revise and resubmit.<br>Notes: " . nl2br(e($mgrNotes))
-                ], function($message) use ($task) {
-                    $message->to($task->employee->email)->subject("Task Rejected: {$task->task_title}");
-                });
+                try {
+                    Mail::send('emails.notification', [
+                        'to_name' => $task->employee->username,
+                        'message_content' => "Your submission for task '#{$taskId} - {$task->task_title}' was <strong>REJECTED</strong>. Please revise and resubmit.<br>Notes: " . nl2br(e($mgrNotes))
+                    ], function($message) use ($task) {
+                        $message->to($task->employee->email)->subject("Task Rejected: {$task->task_title}");
+                    });
+                } catch (\Exception $e) {
+                    Log::error('Task rejection email failed for task ' . $task->task_id . ': ' . $e->getMessage());
+                }
             }
 
             return back()->with('success', "Task {$taskId} rejected and set back to In Progress.");
