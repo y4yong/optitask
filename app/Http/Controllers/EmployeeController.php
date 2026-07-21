@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use App\Models\User;
 use App\Models\Task;
 use App\Models\Department;
@@ -94,7 +95,7 @@ class EmployeeController extends Controller
                 'priority' => strtoupper($row->priority),
                 'desc'     => $row->description,
                 'notes'    => $row->manager_notes ?? '',
-                'task_file' => $row->task_file ? asset($row->task_file) : ''
+                'task_file' => $row->task_file ? asset('storage/' . $row->task_file) : ''
             ];
         }
 
@@ -161,8 +162,7 @@ class EmployeeController extends Controller
         if ($request->hasFile('attachment')) {
             $file = $request->file('attachment');
             $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('uploads/submissions'), $filename);
-            $path = 'uploads/submissions/' . $filename;
+            $path = $file->storeAs('uploads/submissions', $filename, 'public');
         }
 
         $task->update([

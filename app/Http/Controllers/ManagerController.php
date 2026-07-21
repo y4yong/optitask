@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use App\Models\User;
 use App\Models\Task;
 use App\Models\Department;
@@ -155,13 +156,12 @@ class ManagerController extends Controller
             return back()->withErrors(['assignee' => 'Error: Personal tasks can only have 1 assignee!'])->withInput();
         }
 
-        // Upload attachment
+        // Upload attachment to storage/app/public so it's accessible via storage symlink
         $targetFile = null;
         if ($request->hasFile('task_file')) {
             $file = $request->file('task_file');
             $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('uploads/tasks'), $filename);
-            $targetFile = 'uploads/tasks/' . $filename;
+            $targetFile = $file->storeAs('uploads/tasks', $filename, 'public');
         }
 
         $title = $request->input('task_title');

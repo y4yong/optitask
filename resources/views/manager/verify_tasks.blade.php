@@ -51,7 +51,7 @@
                                     <i data-lucide="link" class="w-3 h-3"></i> View Evidence Link
                                 </a>
                             @elseif(!empty($row->submission_file))
-                                <a href="{{ asset($row->submission_file) }}" target="_blank" class="text-[10px] text-blue-500 font-bold flex items-center gap-1 mt-1 hover:underline">
+                                <a href="{{ asset('storage/' . $row->submission_file) }}" target="_blank" class="text-[10px] text-blue-500 font-bold flex items-center gap-1 mt-1 hover:underline">
                                     <i data-lucide="file-text" class="w-3 h-3"></i> View Submission File
                                 </a>
                             @endif

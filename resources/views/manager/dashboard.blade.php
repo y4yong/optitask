@@ -146,7 +146,7 @@
                     </td>
                     <td class="p-4">
                       @if ($t->task_file)
-                        <a href="{{ asset($t->task_file) }}" target="_blank" class="text-xs text-blue-500 hover:underline flex items-center gap-1">
+                        <a href="{{ asset('storage/' . $t->task_file) }}" target="_blank" class="text-xs text-blue-500 hover:underline flex items-center gap-1">
                           <i data-lucide="file" class="w-3.5 h-3.5"></i> View File
                         </a>
                       @else
@@ -155,7 +155,7 @@
                     </td>
                     <td class="p-4">
                       @if ($t->submission_file)
-                        <a href="{{ asset($t->submission_file) }}" target="_blank" class="text-xs text-green-600 hover:underline flex items-center gap-1">
+                        <a href="{{ asset('storage/' . $t->submission_file) }}" target="_blank" class="text-xs text-green-600 hover:underline flex items-center gap-1">
                           <i data-lucide="file-check" class="w-3.5 h-3.5"></i> Download
                         </a>
                       @else
