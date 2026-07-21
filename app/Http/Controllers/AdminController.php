@@ -172,7 +172,7 @@ class AdminController extends Controller
         $username = $request->input('new_username');
         $email = $request->input('new_email');
         $role = $request->input('new_role');
-        $passwordHash = \Illuminate\Support\Facades\Hash::make('kyungsoo');
+        $passwordHash = \Illuminate\Support\Facades\Hash::make('123456789');
 
         User::create([
             'user_id' => $userId,
@@ -186,11 +186,11 @@ class AdminController extends Controller
 
         AuditLog::log(auth()->id(), 'CREATE_USER', "Created user {$userId} with role {$role}");
 
-        return back()->with('success', "User {$userId} created successfully (Default password: 'kyungsoo').");
+        return back()->with('success', "User {$userId} created successfully (Default password: '123456789').");
     }
 
     /**
-     * Update user details (Status, Reason, Department).
+     * Update user details (Role, Status, Reason, Department).
      */
     public function updateUser(Request $request, $userId)
     {
@@ -198,6 +198,11 @@ class AdminController extends Controller
 
         if (!$user) {
             return back()->with('error', 'User not found.');
+        }
+
+        $newRole = $request->input('role', $user->role);
+        if ($user->user_id === 'AD001' && $newRole !== 'Admin') {
+            return back()->with('error', 'Critical Error: System Administrator (AD001) role cannot be changed.');
         }
 
         $accountStatus = $request->input('account_status', 'Active');
@@ -210,9 +215,10 @@ class AdminController extends Controller
             }
         }
 
-        $deptId = ($user->role === 'Admin') ? null : $request->input('dept_id');
+        $deptId = ($newRole === 'Admin') ? null : $request->input('dept_id');
 
         $user->update([
+            'role' => $newRole,
             'account_status' => $accountStatus,
             'suspension_reason' => $suspensionReason,
             'dept_id' => $deptId
@@ -246,7 +252,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Reset user password to default 'kyungsoo'.
+     * Reset user password to default '123456789'.
      */
     public function resetPassword($userId)
     {
@@ -257,12 +263,12 @@ class AdminController extends Controller
         }
 
         $user->update([
-            'password' => \Illuminate\Support\Facades\Hash::make('kyungsoo')
+            'password' => \Illuminate\Support\Facades\Hash::make('123456789')
         ]);
 
         AuditLog::log(auth()->id(), 'RESET_PASSWORD', "Reset password for user {$userId}");
 
-        return back()->with('success', "Password reset to 'kyungsoo' successfully.");
+        return back()->with('success', "Password reset to '123456789' successfully.");
     }
 
     /**

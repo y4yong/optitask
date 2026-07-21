@@ -86,18 +86,13 @@
           </thead>
           <tbody class="text-sm font-semibold divide-y divide-pink-50">
             @foreach($users as $user)
-            <tr class="user-row hover:bg-[#FFF9FA] transition-colors" data-role="{{ $user->role }}" data-search="{{ strtolower($user->user_id . ' ' . $user->username) }}">
+            <tr class="user-row hover:bg-[#FFF9FA] transition-colors cursor-pointer" 
+                id="user-row-{{ $user->user_id }}"
+                data-role="{{ $user->role }}" 
+                data-search="{{ strtolower($user->user_id . ' ' . $user->username) }}"
+                onclick="openEditor('{{ $user->user_id }}', '{{ addslashes($user->username) }}', '{{ $user->role }}', '{{ $user->account_status }}', '{{ addslashes($user->suspension_reason ?? '') }}', '{{ $user->dept_id ?? '' }}')">
               <td class="px-8 py-5">
-                <div class="flex items-center gap-3 cursor-pointer group" 
-                     data-id="{{ $user->user_id }}"
-                     data-name="{{ $user->username }}"
-                     data-email="{{ $user->email }}"
-                     data-role="{{ $user->role }}"
-                     data-status="{{ $user->account_status }}"
-                     data-reason="{{ $user->suspension_reason ?? '' }}"
-                     data-dept-id="{{ $user->dept_id ?? '' }}"
-                     data-dept-name="{{ $user->department->dept_name ?? '' }}"
-                     onclick="showUserDetails(this.dataset.id, this.dataset.name, this.dataset.email, this.dataset.role, this.dataset.status, this.dataset.reason, this.dataset.deptId, this.dataset.deptName)">
+                <div class="flex items-center gap-3 group">
                   <div class="w-10 h-10 rounded-xl bg-pink-50 text-[#FB6F92] flex items-center justify-center font-black text-xs uppercase shadow-sm border border-pink-100 group-hover:scale-105 transition-all">
                       {{ substr($user->username, 0, 2) }}
                   </div>
@@ -134,16 +129,15 @@
                 @endif
               </td>
               <td class="px-8 py-5 text-right">
-                <div class="flex items-center justify-end gap-2">
+                <div class="flex items-center justify-end gap-2" onclick="event.stopPropagation();">
                     <button 
-                      data-id="{{ $user->user_id }}"
-                      data-name="{{ $user->username }}"
-                      data-role="{{ $user->role }}"
-                      data-status="{{ $user->account_status }}"
-                      data-reason="{{ $user->suspension_reason ?? '' }}"
-                      data-dept-id="{{ $user->dept_id ?? '' }}"
-                      onclick="openEditor(this.dataset.id, this.dataset.name, this.dataset.role, this.dataset.status, this.dataset.reason, this.dataset.deptId)" 
-                      class="text-[#FB6F92] hover:bg-pink-50 p-2.5 rounded-xl transition-all border border-transparent hover:border-pink-100 shadow-sm bg-white" title="Edit">
+                      onclick="showUserDetails('{{ $user->user_id }}', '{{ addslashes($user->username) }}', '{{ addslashes($user->email ?? '') }}', '{{ $user->role }}', '{{ $user->account_status }}', '{{ addslashes($user->suspension_reason ?? '') }}', '{{ $user->dept_id ?? '' }}', '{{ addslashes($user->department->dept_name ?? '') }}')" 
+                      class="text-blue-500 hover:bg-blue-50 p-2.5 rounded-xl transition-all border border-transparent hover:border-blue-100 shadow-sm bg-white" title="View Profile">
+                      <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button 
+                      onclick="openEditor('{{ $user->user_id }}', '{{ addslashes($user->username) }}', '{{ $user->role }}', '{{ $user->account_status }}', '{{ addslashes($user->suspension_reason ?? '') }}', '{{ $user->dept_id ?? '' }}')" 
+                      class="text-[#FB6F92] hover:bg-pink-50 p-2.5 rounded-xl transition-all border border-transparent hover:border-pink-100 shadow-sm bg-white" title="Edit Access Control">
                       <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
                     </button>
                     @if($user->user_id !== 'AD001' && $user->user_id !== auth()->id())
@@ -161,13 +155,13 @@
     </div>
 
     <!-- Side panel: Quick Editor -->
-    <div class="glass-card p-8 relative flex flex-col h-fit">
+    <div class="glass-card p-8 relative flex flex-col h-fit" id="access-control-panel">
       <h3 class="font-extrabold text-[#1e293b] text-xl mb-8 flex items-center gap-2">
         <i data-lucide="shield" class="w-5 h-5 text-[#FB6F92]"></i> Access Control
       </h3>
 
       <div id="editor-placeholder" class="text-center py-16 text-gray-400 text-xs font-bold italic">
-          Select a user from directory list to manage status or passwords.
+          Click any user from directory list to edit role, status, department or password.
       </div>
 
       <div id="editor-form-container" class="space-y-6 hidden">
@@ -182,7 +176,11 @@
 
             <div>
               <label class="text-[10px] font-black text-pink-300 uppercase tracking-widest ml-1">System Role</label>
-              <input type="text" id="edit_role" class="mt-2 w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-xs font-bold text-gray-400 outline-none" readonly />
+              <select name="role" id="edit_role" onchange="toggleDeptForRole()" class="mt-2 w-full bg-[#FFF9FA] border-2 border-pink-50 rounded-2xl px-5 py-4 text-xs font-bold text-gray-700 outline-none focus:border-[#FB6F92] cursor-pointer transition-all">
+                <option value="Employee">Employee</option>
+                <option value="Manager">Manager</option>
+                <option value="Admin">Admin</option>
+              </select>
             </div>
 
             <div>
@@ -228,7 +226,7 @@
             @csrf
             <div id="reset-form-route-placeholder"></div>
             <button type="button" onclick="confirmReset()" class="w-full py-3.5 border-2 border-pink-100 rounded-2xl text-[10px] font-bold text-[#FB6F92] hover:bg-pink-50/50 hover:border-[#FB6F92] transition-all uppercase tracking-widest shadow-sm">
-              Reset Password
+              Reset Password (123456789)
             </button>
         </form>
       </div>
@@ -293,7 +291,7 @@
                           <option value="Admin">Admin</option>
                       </select>
                   </div>
-                  <p class="text-[9px] text-[#FB6F92] font-black tracking-wider mt-2 italic">* Default password will be set to 'kyungsoo'</p>
+                  <p class="text-[9px] text-[#FB6F92] font-black tracking-wider mt-2 italic">* Default password will be set to '123456789'</p>
               </form>
           `,
           showCancelButton: true,
@@ -317,6 +315,18 @@
               }
           }
       });
+  }
+
+  function toggleDeptForRole() {
+      const role = document.getElementById('edit_role').value;
+      const deptContainer = document.getElementById('dept_container');
+      const deptSelect = document.getElementById('edit_dept_id');
+      if (role === 'Admin') {
+          deptSelect.value = '';
+          deptContainer.classList.add('hidden');
+      } else {
+          deptContainer.classList.remove('hidden');
+      }
   }
 
   function toggleSuspensionFields() {
@@ -343,6 +353,13 @@
   }
 
   function openEditor(userId, username, role, status, reason, deptId) {
+      // Highlight active table row
+      document.querySelectorAll('.user-row').forEach(r => r.classList.remove('bg-pink-50/80', 'border-l-4', 'border-[#FB6F92]'));
+      const targetRow = document.getElementById('user-row-' + userId);
+      if (targetRow) {
+          targetRow.classList.add('bg-pink-50/80', 'border-l-4', 'border-[#FB6F92]');
+      }
+
       document.getElementById('editor-placeholder').classList.add('hidden');
       document.getElementById('editor-form-container').classList.remove('hidden');
 
@@ -354,8 +371,17 @@
       document.getElementById('reset-form').setAttribute('action', resetRoute);
 
       document.getElementById('edit_display_user').value = username + ' (' + userId + ')';
-      document.getElementById('edit_role').value = role;
       
+      const roleSelect = document.getElementById('edit_role');
+      if (roleSelect) {
+          roleSelect.value = role;
+          if (userId === 'AD001') {
+              roleSelect.disabled = true;
+          } else {
+              roleSelect.disabled = false;
+          }
+      }
+
       const deptSelect = document.getElementById('edit_dept_id');
       const deptContainer = document.getElementById('dept_container');
       if (role === 'Admin') {
@@ -478,15 +504,19 @@
                               ${skillsHtml}
                           </div>
                           
-                          <div class="flex flex-col items-center justify-center gap-3">
+                          <div class="flex flex-col items-center justify-center gap-3 mb-6">
                               <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Account Status</p>
                               ${statusHtml}
                           </div>
                           ${reasonHtml}
+
+                          <button onclick="Swal.close(); openEditor('${id}', '${name.replace(/'/g, "\\'")}', '${role}', '${status}', '${(reason||'').replace(/'/g, "\\'")}', '${deptId}');" class="mt-4 bg-[#FF8FAB] hover:bg-[#FB6F92] text-white px-6 py-3 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all">
+                              Edit Access Control
+                          </button>
                       </div>
                   `,
                   showConfirmButton: true,
-                  confirmButtonColor: '#FF8FAB',
+                  confirmButtonColor: '#94a3b8',
                   confirmButtonText: 'Close Profile',
                   background: '#FFF9FA',
                   didOpen: () => {
@@ -538,7 +568,7 @@
   function confirmReset() {
       Swal.fire({
           title: 'Reset Password?',
-          text: "This will reset the user's password to 'kyungsoo'. Proceed?",
+          text: "This will reset the user's password to '123456789'. Proceed?",
           icon: 'question',
           showCancelButton: true,
           confirmButtonColor: '#f97316',
