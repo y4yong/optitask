@@ -217,9 +217,12 @@ class ManagerController extends Controller
                     ], function($message) use ($emp, $title) {
                         $message->to($emp->email)->subject("New Task Assigned: {$title}");
                     });
+                    Log::info('Task assignment email sent successfully to ' . $emp->email);
                 } catch (\Exception $e) {
-                    Log::error('Task assignment email failed for ' . $empId . ': ' . $e->getMessage());
+                    Log::error('Task assignment email failed for ' . $empId . ' (' . $emp->email . '): ' . $e->getMessage());
                 }
+            } else {
+                Log::warning('Task assignment email skipped for ' . $empId . ': user or email missing.');
             }
         }
 
