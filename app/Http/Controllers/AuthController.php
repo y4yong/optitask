@@ -48,7 +48,10 @@ class AuthController extends Controller
                     return redirect()->route('admin.dashboard');
                 } elseif ($user->role === 'Manager') {
                     return redirect()->route('manager.dashboard');
-                } elseif ($user->role === 'Employee') {
+                } elseif (strtolower($user->role) === 'employee') {
+                    if (!$user->isProfileComplete()) {
+                        return redirect()->route('employee.skills')->with('warning', 'Notice: Please select your department and add at least one skill to complete your profile and unlock your task dashboard.');
+                    }
                     return redirect()->route('employee.dashboard');
                 }
             }

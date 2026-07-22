@@ -22,6 +22,37 @@
         </div>
     @endif
 
+    @if(session('warning'))
+        <div class="mb-6 p-5 rounded-2xl text-center text-xs font-black bg-amber-50 text-amber-600 border border-amber-200/80 shadow-sm flex items-center justify-center gap-2">
+            <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-500"></i>
+            <span>{{ session('warning') }}</span>
+        </div>
+    @endif
+
+    @if(!Auth::user()->isProfileComplete())
+        <div class="mb-8 p-6 rounded-[2rem] bg-gradient-to-r from-amber-500/10 via-pink-500/10 to-rose-500/10 border-2 border-pink-200/80 shadow-md">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-2xl bg-[#FB6F92] text-white flex items-center justify-center font-black text-xl shrink-0 shadow-md shadow-pink-200">
+                        <i data-lucide="shield-alert" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-black text-[#1e293b] uppercase tracking-tight">Complete Profile Required</h3>
+                        <p class="text-xs font-semibold text-gray-600 mt-0.5">Select your department and add at least one skill below to unlock your task workspace.</p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 text-[10px] font-black uppercase tracking-wider">
+                    <span class="px-3 py-1.5 rounded-xl border {{ Auth::user()->dept_id ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-red-50 text-red-500 border-red-200 animate-pulse' }}">
+                        1. Department: {{ Auth::user()->dept_id ? 'Selected' : 'Missing' }}
+                    </span>
+                    <span class="px-3 py-1.5 rounded-xl border {{ Auth::user()->skills()->exists() ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-red-50 text-red-500 border-red-200 animate-pulse' }}">
+                        2. Skills: {{ Auth::user()->skills()->count() }} Added (Min 1)
+                    </span>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         <!-- Left Column: Add Skill & Skill Inventory -->

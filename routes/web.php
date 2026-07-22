@@ -57,7 +57,7 @@ Route::middleware(['auth', 'role:Manager'])->prefix('manager')->name('manager.')
 });
 
 // Employee Routes (Employee role required)
-Route::middleware(['auth', 'role:Employee'])->prefix('employee')->name('employee.')->group(function () {
+Route::middleware(['auth', 'role:Employee', 'profile.complete'])->prefix('employee')->name('employee.')->group(function () {
     Route::get('/dashboard', [EmployeeController::class, 'dashboard'])->name('dashboard');
     Route::get('/tasks', [EmployeeController::class, 'tasks'])->name('tasks');
     Route::post('/start-task', [EmployeeController::class, 'startTask'])->name('start_task');

@@ -87,4 +87,19 @@ class User extends Authenticatable
                     ->withPivot('proficiency_level')
                     ->withTimestamps();
     }
+
+    /**
+     * Check if Employee profile is complete (Department selected AND at least 1 skill added)
+     */
+    public function isProfileComplete(): bool
+    {
+        if (strtolower($this->role) !== 'employee') {
+            return true;
+        }
+
+        $hasDepartment = !empty($this->dept_id);
+        $hasSkill = $this->skills()->exists();
+
+        return $hasDepartment && $hasSkill;
+    }
 }

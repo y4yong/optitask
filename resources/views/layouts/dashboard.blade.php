@@ -129,27 +129,52 @@
             </a>
 
         @elseif(auth()->user()->role === 'Employee' || auth()->user()->role === 'employee')
+            @php
+                $isComplete = auth()->user()->isProfileComplete();
+            @endphp
             <p class="text-[11px] uppercase tracking-[0.2em] text-pink-300 font-bold px-8 mb-4">Employee Console</p>
-            <a href="{{ route('employee.dashboard') }}" class="flex items-center gap-4 px-8 py-4 transition-all {{ request()->routeIs('employee.dashboard') ? 'sidebar-active' : 'sidebar-link' }}">
-                <i data-lucide="layout-grid" class="w-5 h-5"></i> Dashboard
+            <a href="{{ route('employee.dashboard') }}" class="flex items-center justify-between px-8 py-4 transition-all {{ request()->routeIs('employee.dashboard') ? 'sidebar-active' : 'sidebar-link' }} {{ !$isComplete ? 'opacity-65' : '' }}">
+                <span class="flex items-center gap-4">
+                    <i data-lucide="layout-grid" class="w-5 h-5"></i> Dashboard
+                </span>
+                @if(!$isComplete)
+                    <i data-lucide="lock" class="w-4 h-4 text-amber-500 mr-2" title="Profile Incomplete"></i>
+                @endif
             </a>
-            <a href="{{ route('employee.tasks') }}" class="flex items-center gap-4 px-8 py-4 transition-all {{ request()->routeIs('employee.tasks') ? 'sidebar-active' : 'sidebar-link' }}">
-                <i data-lucide="clipboard-list" class="w-5 h-5"></i> My Tasks
+            <a href="{{ route('employee.tasks') }}" class="flex items-center justify-between px-8 py-4 transition-all {{ request()->routeIs('employee.tasks') ? 'sidebar-active' : 'sidebar-link' }} {{ !$isComplete ? 'opacity-65' : '' }}">
+                <span class="flex items-center gap-4">
+                    <i data-lucide="clipboard-list" class="w-5 h-5"></i> My Tasks
+                </span>
+                @if(!$isComplete)
+                    <i data-lucide="lock" class="w-4 h-4 text-amber-500 mr-2" title="Profile Incomplete"></i>
+                @endif
             </a>
 
             <div class="pt-6">
                 <p class="text-[11px] uppercase tracking-[0.2em] text-pink-300 font-bold px-8 mb-4">Account</p>
-                <a href="{{ route('employee.skills') }}" class="flex items-center gap-4 px-8 py-4 transition-all {{ request()->routeIs('employee.skills') ? 'sidebar-active' : 'sidebar-link' }}">
-                    <i data-lucide="user" class="w-5 h-5"></i> Profile
+                <a href="{{ route('employee.skills') }}" class="flex items-center justify-between px-8 py-4 transition-all {{ request()->routeIs('employee.skills') ? 'sidebar-active' : 'sidebar-link' }}">
+                    <span class="flex items-center gap-4">
+                        <i data-lucide="user" class="w-5 h-5"></i> Profile
+                    </span>
+                    @if(!$isComplete)
+                        <span class="px-2 py-0.5 rounded text-[8px] font-black uppercase bg-amber-50 text-amber-600 border border-amber-200 mr-2">Incomplete</span>
+                    @endif
                 </a>
-                <a href="{{ route('employee.performance') }}" class="flex items-center gap-4 px-8 py-4 transition-all {{ request()->routeIs('employee.performance') ? 'sidebar-active' : 'sidebar-link' }}">
-                    <i data-lucide="bar-chart-3" class="w-5 h-5"></i> Performance
+                <a href="{{ route('employee.performance') }}" class="flex items-center justify-between px-8 py-4 transition-all {{ request()->routeIs('employee.performance') ? 'sidebar-active' : 'sidebar-link' }} {{ !$isComplete ? 'opacity-65' : '' }}">
+                    <span class="flex items-center gap-4">
+                        <i data-lucide="bar-chart-3" class="w-5 h-5"></i> Performance
+                    </span>
+                    @if(!$isComplete)
+                        <i data-lucide="lock" class="w-4 h-4 text-amber-500 mr-2" title="Profile Incomplete"></i>
+                    @endif
                 </a>
-                <a href="{{ route('employee.notification') }}" class="flex items-center justify-between px-8 py-4 transition-all {{ request()->routeIs('employee.notification') ? 'sidebar-active' : 'sidebar-link' }}">
+                <a href="{{ route('employee.notification') }}" class="flex items-center justify-between px-8 py-4 transition-all {{ request()->routeIs('employee.notification') ? 'sidebar-active' : 'sidebar-link' }} {{ !$isComplete ? 'opacity-65' : '' }}">
                     <span class="flex items-center gap-4">
                         <i data-lucide="bell" class="w-5 h-5"></i> Notifications
                     </span>
-                    @if($unreadNotificationCount > 0)
+                    @if(!$isComplete)
+                        <i data-lucide="lock" class="w-4 h-4 text-amber-500 mr-2" title="Profile Incomplete"></i>
+                    @elseif($unreadNotificationCount > 0)
                         <span class="w-2.5 h-2.5 rounded-full bg-red-500 mr-2 animate-pulse"></span>
                     @endif
                 </a>
