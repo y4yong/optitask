@@ -95,7 +95,10 @@ class EmployeeController extends Controller
                 'priority' => strtoupper($row->priority),
                 'desc'     => $row->description,
                 'notes'    => $row->manager_notes ?? '',
-                'task_file' => $row->task_file_url ?? ''
+                'task_file' => $row->task_file_url ?? '',
+                'submission_file' => $row->submission_file_url ?? '',
+                'submission_file_name' => $row->submission_file ? basename($row->submission_file) : '',
+                'evidence_link' => $row->evidence_link ?? '',
             ];
         }
 

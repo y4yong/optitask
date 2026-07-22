@@ -56,8 +56,7 @@ class Task extends Model
         if (str_starts_with($this->task_file, 'http://') || str_starts_with($this->task_file, 'https://')) {
             return $this->task_file;
         }
-        $cleanPath = preg_replace('#^(\.\./|\./|storage/)*#', '', $this->task_file);
-        return asset($cleanPath);
+        return route('task.file.download', ['task_id' => $this->task_id, 'type' => 'task']);
     }
 
     /**
@@ -69,7 +68,6 @@ class Task extends Model
         if (str_starts_with($this->submission_file, 'http://') || str_starts_with($this->submission_file, 'https://')) {
             return $this->submission_file;
         }
-        $cleanPath = preg_replace('#^(\.\./|\./|storage/)*#', '', $this->submission_file);
-        return asset($cleanPath);
+        return route('task.file.download', ['task_id' => $this->task_id, 'type' => 'submission']);
     }
 }

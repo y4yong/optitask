@@ -138,13 +138,33 @@
                             <i data-lucide="paperclip" class="w-4.5 h-4.5"></i>
                         </div>
                         <div class="min-w-0">
-                            <p class="text-[8px] font-black text-pink-400 uppercase tracking-widest">Attachment</p>
+                            <p class="text-[8px] font-black text-pink-400 uppercase tracking-widest">Manager File Attachment</p>
                             <p id="mFileName" class="text-xs font-extrabold text-[#1e293b] truncate"></p>
                         </div>
                     </div>
-                    <a id="mFileLink" href="#" download class="px-4 py-2 bg-pink-50 hover:bg-pink-100 text-[#FB6F92] text-[10px] font-black uppercase rounded-lg transition-all flex items-center gap-1 shadow-sm shrink-0">
-                        <i data-lucide="download" class="w-3 h-3"></i> Download
+                    <a id="mFileLink" href="#" target="_blank" class="px-4 py-2 bg-pink-50 hover:bg-pink-100 text-[#FB6F92] text-[10px] font-black uppercase rounded-lg transition-all flex items-center gap-1 shadow-sm shrink-0">
+                        <i data-lucide="download" class="w-3 h-3"></i> View File
                     </a>
+                </div>
+
+                <div id="mSubFileContainer" class="bg-emerald-50/40 rounded-2xl p-5 border border-emerald-100 flex flex-col gap-3 shadow-sm hidden">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                            <i data-lucide="file-check" class="w-4.5 h-4.5"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-[8px] font-black text-emerald-600 uppercase tracking-widest">Your Submitted Work</p>
+                            <p id="mSubFileName" class="text-xs font-extrabold text-slate-800 truncate"></p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 pt-1 border-t border-emerald-100/60">
+                        <a id="mSubFileLink" href="#" target="_blank" class="px-3.5 py-1.5 bg-emerald-500 text-white text-[10px] font-black uppercase rounded-lg hover:bg-emerald-600 transition-all flex items-center gap-1 shadow-sm hidden">
+                            <i data-lucide="download" class="w-3 h-3"></i> Submission File
+                        </a>
+                        <a id="mEvidenceLink" href="#" target="_blank" class="px-3.5 py-1.5 bg-purple-500 text-white text-[10px] font-black uppercase rounded-lg hover:bg-purple-600 transition-all flex items-center gap-1 shadow-sm hidden">
+                            <i data-lucide="external-link" class="w-3 h-3"></i> Evidence Link
+                        </a>
+                    </div>
                 </div>
 
                 <div id="modal-action-area" class="p-6 bg-slate-50 border border-slate-100 rounded-2xl text-center">
@@ -371,13 +391,39 @@
 
         const fileContainer = document.getElementById("mFileContainer");
         if (t.task_file && t.task_file.trim() !== "") {
-            const fileName = t.task_file.split('/').pop().split('\\').pop();
-            const displayName = fileName.includes('_') ? fileName.substring(fileName.indexOf('_') + 1) : fileName;
-            document.getElementById("mFileName").textContent = displayName;
+            document.getElementById("mFileName").textContent = "Manager Attached Document";
             document.getElementById("mFileLink").href = t.task_file;
             fileContainer.classList.remove("hidden");
         } else {
             fileContainer.classList.add("hidden");
+        }
+
+        const subFileContainer = document.getElementById("mSubFileContainer");
+        const subFileLink = document.getElementById("mSubFileLink");
+        const evidenceLink = document.getElementById("mEvidenceLink");
+        let hasSub = false;
+
+        if (t.submission_file && t.submission_file.trim() !== "") {
+            subFileLink.href = t.submission_file;
+            subFileLink.classList.remove("hidden");
+            hasSub = true;
+        } else {
+            subFileLink.classList.add("hidden");
+        }
+
+        if (t.evidence_link && t.evidence_link.trim() !== "") {
+            evidenceLink.href = t.evidence_link;
+            evidenceLink.classList.remove("hidden");
+            hasSub = true;
+        } else {
+            evidenceLink.classList.add("hidden");
+        }
+
+        if (hasSub) {
+            document.getElementById("mSubFileName").textContent = t.submission_file_name || (t.evidence_link ? "Evidence URL Provided" : "Deliverable File Attached");
+            subFileContainer.classList.remove("hidden");
+        } else {
+            subFileContainer.classList.add("hidden");
         }
 
         const actionArea = document.getElementById("modal-action-area");

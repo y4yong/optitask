@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ManagerController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\FileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,10 +25,11 @@ Route::middleware('guest')->group(function () {
     Route::post('/signup', [AuthController::class, 'signup']);
 });
 
-// Authenticated Logout Route
+// Authenticated Routes
 Route::middleware('auth')->group(function () {
     Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/task-file/{task_id}/{type}', [FileController::class, 'download'])->name('task.file.download');
 });
 
 // Admin Routes (Admin role required)

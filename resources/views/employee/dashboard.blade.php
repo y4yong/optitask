@@ -76,12 +76,29 @@
                                     <td class="px-6 py-5 font-mono text-[11px] text-slate-700 font-bold">{{ $row->task_id }}</td>
                                     <td class="px-6 py-5">
                                         <p class="text-sm font-extrabold text-[#1e293b]">{{ $row->task_title }}</p>
-                                        <span class="inline-block mt-1 px-2.5 py-0.5 rounded text-[8px] font-black uppercase {{ $row->task_status === 'In Progress' ? 'bg-amber-50 text-amber-600 border border-amber-100' : ($row->task_status === 'Done' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-pink-50 text-[#FB6F92] border border-pink-100') }}">
-                                            {{ $row->task_status === 'Done' ? 'In Review' : $row->task_status }}
-                                        </span>
-                                        @if(in_array($row->task_status, ['To-Do', 'In Progress']) && strtotime($row->due_date) < strtotime(date('Y-m-d')))
-                                            <span class="inline-block mt-1 ml-1 px-2.5 py-0.5 rounded text-[8px] font-black uppercase bg-red-50 text-red-600 border border-red-100 animate-pulse">Overdue</span>
-                                        @endif
+                                        <div class="flex flex-wrap gap-1.5 mt-1">
+                                            <span class="inline-block px-2.5 py-0.5 rounded text-[8px] font-black uppercase {{ $row->task_status === 'In Progress' ? 'bg-amber-50 text-amber-600 border border-amber-100' : ($row->task_status === 'Done' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-pink-50 text-[#FB6F92] border border-pink-100') }}">
+                                                {{ $row->task_status === 'Done' ? 'In Review' : $row->task_status }}
+                                            </span>
+                                            @if(in_array($row->task_status, ['To-Do', 'In Progress']) && strtotime($row->due_date) < strtotime(date('Y-m-d')))
+                                                <span class="inline-block px-2.5 py-0.5 rounded text-[8px] font-black uppercase bg-red-50 text-red-600 border border-red-100 animate-pulse">Overdue</span>
+                                            @endif
+                                            @if($row->task_file)
+                                                <a href="{{ $row->task_file_url }}" target="_blank" class="inline-flex items-center gap-1 text-[9px] font-bold text-blue-600 bg-blue-50/80 hover:bg-blue-100 px-2 py-0.5 rounded transition-colors">
+                                                    <i data-lucide="file-text" class="w-3 h-3 text-blue-500"></i> Manager File
+                                                </a>
+                                            @endif
+                                            @if($row->submission_file)
+                                                <a href="{{ $row->submission_file_url }}" target="_blank" class="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-600 bg-emerald-50/80 hover:bg-emerald-100 px-2 py-0.5 rounded transition-colors">
+                                                    <i data-lucide="file-check" class="w-3 h-3 text-emerald-500"></i> Submission File
+                                                </a>
+                                            @endif
+                                            @if($row->evidence_link)
+                                                <a href="{{ $row->evidence_link }}" target="_blank" class="inline-flex items-center gap-1 text-[9px] font-bold text-purple-600 bg-purple-50/80 hover:bg-purple-100 px-2 py-0.5 rounded transition-colors">
+                                                    <i data-lucide="link" class="w-3 h-3 text-purple-500"></i> Link
+                                                </a>
+                                            @endif
+                                        </div>
                                     </td>
                                     <td class="px-6 py-5">
                                         <div class="flex items-center gap-2 text-xs font-bold text-gray-500">
@@ -155,6 +172,23 @@
                                     <td class="px-6 py-5 font-mono text-[11px] text-slate-700 font-bold">{{ $row->task_id }}</td>
                                     <td class="px-6 py-5">
                                         <p class="text-sm font-extrabold text-[#1e293b]">{{ $row->task_title }}</p>
+                                        <div class="flex flex-wrap gap-1.5 mt-1">
+                                            @if($row->task_file)
+                                                <a href="{{ $row->task_file_url }}" target="_blank" class="inline-flex items-center gap-1 text-[9px] font-bold text-blue-600 bg-blue-50/80 hover:bg-blue-100 px-2 py-0.5 rounded transition-colors">
+                                                    <i data-lucide="file-text" class="w-3 h-3 text-blue-500"></i> Manager File
+                                                </a>
+                                            @endif
+                                            @if($row->submission_file)
+                                                <a href="{{ $row->submission_file_url }}" target="_blank" class="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-600 bg-emerald-50/80 hover:bg-emerald-100 px-2 py-0.5 rounded transition-colors">
+                                                    <i data-lucide="file-check" class="w-3 h-3 text-emerald-500"></i> Submission File
+                                                </a>
+                                            @endif
+                                            @if($row->evidence_link)
+                                                <a href="{{ $row->evidence_link }}" target="_blank" class="inline-flex items-center gap-1 text-[9px] font-bold text-purple-600 bg-purple-50/80 hover:bg-purple-100 px-2 py-0.5 rounded transition-colors">
+                                                    <i data-lucide="link" class="w-3 h-3 text-purple-500"></i> Link
+                                                </a>
+                                            @endif
+                                        </div>
                                     </td>
                                     <td class="px-6 py-5">
                                         <div class="flex items-center gap-2 text-xs font-bold text-gray-500">
