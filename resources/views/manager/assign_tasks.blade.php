@@ -69,13 +69,16 @@
           <div class="md:col-span-2">
             <label class="text-[11px] font-black text-pink-300 uppercase tracking-widest ml-1">Work Type</label>
             <select name="task_type" id="task-type-select" class="mt-2 w-full bg-[#FFF9FA] rounded-2xl px-6 py-4 text-sm font-bold text-[#1e293b] outline-none border-2 border-pink-50 focus:border-[#FB6F92] transition-all cursor-pointer">
+                <option value="Assigned" {{ old('task_type', 'Assigned') === 'Assigned' || old('task_type') === 'Group' ? 'selected' : '' }}>Group / Multiple Assignees (Default)</option>
                 <option value="Personal" {{ old('task_type') === 'Personal' ? 'selected' : '' }}>Personal Task (Single Assignee)</option>
-                <option value="Group" {{ old('task_type') === 'Group' ? 'selected' : '' }}>Group Project (Multiple Assignees)</option>
             </select>
           </div>
 
           <div class="md:col-span-2">
-            <label class="text-[11px] font-black text-pink-300 uppercase tracking-widest ml-1">Assignee(s)</label>
+            <div class="flex justify-between items-center ml-1">
+              <label class="text-[11px] font-black text-pink-300 uppercase tracking-widest">Assignee(s)</label>
+              <span class="text-[10px] font-bold text-pink-400">Search or click to select multiple employees</span>
+            </div>
             <div class="mt-2">
                 <select name="assignee[]" id="employee-select" multiple required>
                   @foreach ($employees as $emp)
@@ -160,17 +163,19 @@
         removeItemButton: true,
         searchEnabled: true,
         placeholder: true,
-        placeholderValue: maxItems === 1 ? 'Select exactly one employee...' : 'Select multiple employees...',
+        placeholderValue: maxItems === 1 ? 'Select single employee...' : 'Select one or more employees...',
         itemSelectText: 'Click to select',
         maxItemCount: maxItems
       });
   }
 
   const taskTypeSelect = document.getElementById('task-type-select');
-  initChoices(taskTypeSelect.value === 'Personal' ? 1 : -1);
+  const initialMax = (taskTypeSelect.value === 'Personal') ? 1 : -1;
+  initChoices(initialMax);
 
   taskTypeSelect.addEventListener('change', function() {
-      initChoices(this.value === 'Personal' ? 1 : -1);
+      const maxItems = (this.value === 'Personal') ? 1 : -1;
+      initChoices(maxItems);
   });
 
   // AI Suggestion Logic

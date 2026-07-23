@@ -152,7 +152,7 @@ class ManagerController extends Controller
             'priority' => 'required|string|in:Low,Medium,High',
             'deadline' => 'required|date|after_or_equal:today',
             'assignee' => 'required|array|min:1',
-            'task_type' => 'required|string|in:Personal,Assigned',
+            'task_type' => 'required|string|in:Personal,Assigned,Group',
             'task_file' => 'nullable|file|max:10240', // Max 10MB
             'manager_notes' => 'nullable|string',
         ]);
@@ -160,8 +160,8 @@ class ManagerController extends Controller
         $assignees = $request->input('assignee');
         $taskType = $request->input('task_type');
 
-        if ($taskType === 'Personal' && count($assignees) > 1) {
-            return back()->withErrors(['assignee' => 'Error: Personal tasks can only have 1 assignee!'])->withInput();
+        if ($taskType === 'Group' || count($assignees) > 1) {
+            $taskType = 'Assigned';
         }
 
         // Upload attachment to storage and ensure accessible in public/uploads/tasks
